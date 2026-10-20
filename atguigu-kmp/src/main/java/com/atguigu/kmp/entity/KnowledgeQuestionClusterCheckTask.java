@@ -4,24 +4,16 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * <p>
- * 问题簇检测任务表
- * </p>
- *
- * @author atguigu
- * @since 2026-10-20
+ * 问题簇检测批次摘要。
  */
-@Getter
-@Setter
-@ToString
+@Data
 @TableName("kmp_knowledge_question_cluster_check_task")
 public class KnowledgeQuestionClusterCheckTask implements Serializable {
 
@@ -46,11 +38,13 @@ public class KnowledgeQuestionClusterCheckTask implements Serializable {
     /**
      * 检测窗口开始时间，包含
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime rangeStartTime;
 
     /**
      * 检测窗口结束时间，不包含
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime rangeEndTime;
 
     /**
@@ -91,11 +85,13 @@ public class KnowledgeQuestionClusterCheckTask implements Serializable {
     /**
      * 实际开始时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startTime;
 
     /**
      * 实际完成时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime finishTime;
 
     /**
@@ -116,6 +112,7 @@ public class KnowledgeQuestionClusterCheckTask implements Serializable {
     /**
      * 创建时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     /**
@@ -126,6 +123,7 @@ public class KnowledgeQuestionClusterCheckTask implements Serializable {
     /**
      * 最后修改时间
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
     /**
