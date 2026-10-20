@@ -1,0 +1,231 @@
+# 项目相关配置
+ruoyi:
+  # 名称
+  name: RuoYi
+  # 版本
+  version: 3.9.2
+  # 版权年份
+  copyrightYear: 2026
+  # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）
+  profile: D:/ruoyi/uploadPath
+  # 获取ip地址开关
+  addressEnabled: false
+  # 验证码类型 math 数字计算 char 字符验证
+  captchaType: math
+
+# 开发环境配置
+server:
+  # 服务器的HTTP端口，默认为8080
+  port: 8080
+  servlet:
+    # 应用的访问路径
+    context-path: /
+  tomcat:
+    # tomcat的URI编码
+    uri-encoding: UTF-8
+    # 连接数满后的排队数，默认为100
+    accept-count: 1000
+    threads:
+      # tomcat最大线程数，默认为200
+      max: 800
+      # Tomcat启动初始化的线程数，默认值10
+      min-spare: 100
+
+# 日志配置
+logging:
+  level:
+    com.ruoyi: info
+    com.atguigu.kmp: info
+    # 只打印 kmp 模块 mapper 层的 SQL
+    com.atguigu.kmp.mapper: debug
+    org.springframework: warn
+
+# 用户配置
+user:
+  password:
+    # 密码最大错误次数
+    maxRetryCount: 5
+    # 密码锁定时间（默认10分钟）
+    lockTime: 10
+
+# Spring配置
+spring:
+  # 资源信息
+  messages:
+    # 国际化资源文件路径
+    basename: i18n/messages
+  profiles:
+    active: druid
+  # 文件上传
+  servlet:
+    multipart:
+      # 单个文件大小
+      max-file-size: 10MB
+      # 设置总上传的文件大小
+      max-request-size: 20MB
+  # 服务模块
+  devtools:
+    restart:
+      # 热部署开关
+      enabled: true
+  data:
+    # redis 配置
+    redis:
+      # 地址
+      host: localhost
+      # 端口，默认为6379
+      port: 6379
+      # 数据库索引
+      database: 0
+      # 密码
+      password: 123123
+      # 连接超时时间
+      timeout: 10s
+      lettuce:
+        pool:
+          # 连接池中的最小空闲连接
+          min-idle: 0
+          # 连接池中的最大空闲连接
+          max-idle: 8
+          # 连接池的最大数据库连接数
+          max-active: 8
+          # #连接池最大阻塞等待时间（使用负值表示没有限制）
+          max-wait: -1ms
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:xxx}
+      base-url: ${OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      chat:
+        options:
+          model: qwen3.8-flash
+          temperature: 0
+
+# token配置
+token:
+  # 令牌自定义标识
+  header: Authorization
+  # 令牌密钥
+  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌有效期（默认30分钟）
+  expireTime: 30
+
+# MyBatis配置
+mybatis:
+  # 搜索指定包别名
+  typeAliasesPackage: com.ruoyi.**.domain
+  # 配置mapper的扫描，找到所有的mapper.xml映射文件
+  mapperLocations: classpath*:mapper/**/*Mapper.xml
+  # 加载全局的配置文件
+  configLocation: classpath:mybatis/mybatis-config.xml
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  # SQL 打印配置：把 MyBatis 的执行日志输出到控制台
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+
+# PageHelper分页插件
+pagehelper:
+  helperDialect: mysql
+  supportMethodsArguments: true
+  params: count=countSql
+
+# Springdoc配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+  group-configs:
+    - group: 'default'
+      display-name: '测试模块'
+      paths-to-match: '/**'
+      packages-to-scan: com.ruoyi.web.controller.tool
+
+    - group: 'kmp'
+      display-name: '智能体中台'
+      paths-to-match: '/**'
+      packages-to-scan: com.atguigu.kmp.controller
+
+# 防盗链配置
+referer:
+  # 防盗链开关
+  enabled: false
+  # 允许的域名列表
+  allowed-domains: localhost,127.0.0.1,ruoyi.vip,www.ruoyi.vip
+
+# 防止XSS攻击
+xss:
+  # 过滤开关
+  enabled: true
+  # 排除链接（多个用逗号分隔）
+  excludes: /system/notice
+  # 匹配链接
+  urlPatterns: /system/*,/monitor/*,/tool/*,/kmp/*
+
+# 知识导入后台轮询配置
+kmp:
+  # MinIO 对外可读端点，下载时与数据库中的对象路径拼接
+  minio-public-endpoint: http://localhost:9000
+
+  knowledge-import:
+    poll-interval-ms: 5000
+    batch-size: 100
+    pending-expire-minutes: 30
+
+  knowledge-system:
+    # 外部切片服务地址由部署环境提供，留空时不影响列表和基础信息编辑
+    base-url: http://localhost:8000
+    connect-timeout: 3s
+    read-timeout: 30s
+
+
+  faq-search:
+    # ES 仅保存问题簇 ID 和标准问题，凭据如有需要由部署侧统一注入
+    base-url: http://localhost:9200
+    index-name: kmp_faq_question
+    connect-timeout: 3s
+    read-timeout: 10s
+  dashboard:
+    # 两类业务日志先进入 Redis Stream，再由平台单线程批量落库
+    query-log-stream-key: kmp:knowledge-query-log:stream
+    faq-log-stream-key: kmp:faq-visit-log:stream
+    consumer-group: kmp-dashboard-writer
+    stream:
+      batch-size: 100
+      block-timeout: 2s
+      pending-idle: 60s
+      max-retries: 5
+      max-length: 100000
+    idempotent-lock-timeout: 30s
+  milvus:
+    host: ${KMP_MILVUS_HOST:localhost}
+    port: ${KMP_MILVUS_PORT:19530}
+    username: ${KMP_MILVUS_USERNAME:root}
+    password: ${KMP_MILVUS_PASSWORD:milvus}
+    database-name: default
+    collection-name: kmp_question_cluster
+    initialize-schema: true
+    embedding-dimension: 1024
+    index-type: IVF_FLAT
+    metric-type: COSINE
+  question-cluster-check:
+    candidate-top-k: 10
+    high-score: 0.85
+    medium-score: 0.65
+    pending-count: 5
+  qwen:
+    api-key: ${DASHSCOPE_API_KEY:xxx}
+    base-url: ${DASHSCOPE_API_BASE_URL:https://dashscope.aliyuncs.com}
+    embedding-model: text-embedding-v4
+    embedding-dimension: 1024
+    embedding-path: /api/v1/services/embeddings/text-embedding/text-embedding
+    reranker-model: qwen3-rerank
+    reranker-path: /api/v1/services/rerank/text-rerank/text-rerank
