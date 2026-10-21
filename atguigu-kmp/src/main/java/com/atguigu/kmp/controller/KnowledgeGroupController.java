@@ -1,8 +1,18 @@
 package com.atguigu.kmp.controller;
 
+import com.atguigu.kmp.entity.KnowledgeGroup;
+import com.atguigu.kmp.service.KnowledgeGroupService;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.constant.HttpStatus;
+import com.ruoyi.common.core.controller.BaseController;
+import com.ruoyi.common.core.page.PageDomain;
+import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.core.page.TableSupport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.ruoyi.common.core.controller.BaseController;
 
 /**
  * <p>
@@ -13,7 +23,36 @@ import com.ruoyi.common.core.controller.BaseController;
  * @since 2026-10-21
  */
 @RestController
-@RequestMapping("/knowledgeGroup")
+@RequestMapping("kmp/knowledgeGroup")
 public class KnowledgeGroupController extends BaseController {
+    @Autowired
+    private KnowledgeGroupService knowledgeGroupService;
 
+    /**
+     * 知识组列表
+     * <p>
+     * 根据查询条件分页查询知识组信息，返回统一表格数据格式。
+     *
+     * @param query 知识组查询条件
+     * @return 分页查询结果（含知识组记录列表与总条数）
+     */
+    @PreAuthorize("@ss.hasPermi('system:post:list')")
+    @GetMapping("/list")
+    public TableDataInfo list(KnowledgeGroup query) {
+        // 构建分页对象
+        PageDomain pageDomain = TableSupport.buildPageRequest();
+        Integer pageNum = pageDomain.getPageNum();
+        Integer pageSize = pageDomain.getPageSize();
+        Page<KnowledgeGroup> page = new Page<>(pageNum, pageSize);
+
+        // 执行分页查询
+        Page<KnowledgeGroup> result = knowledgeGroupService.pageKnowledgeGroups(page, query);
+
+        // 封装统一响应结果
+        TableDataInfo rspData = new TableDataInfo(result.getRecords(), result.getTotal());
+        rspData.setCode(HttpStatus.SUCCESS);
+        rspData.setMsg("查询成功");
+
+        return rspData;
+    }
 }

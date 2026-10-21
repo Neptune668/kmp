@@ -1,6 +1,7 @@
 package com.atguigu.kmp.service;
 
 import com.atguigu.kmp.entity.KnowledgeGroup;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.IService;
 
 /**
@@ -13,4 +14,5 @@ import com.baomidou.mybatisplus.spring.service.IService;
  */
 public interface KnowledgeGroupService extends IService<KnowledgeGroup> {
 
+    Page<KnowledgeGroup> pageKnowledgeGroups(Page<KnowledgeGroup> page, KnowledgeGroup query);
 }
