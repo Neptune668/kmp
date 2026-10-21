@@ -23,20 +23,20 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2026-10-21
  */
 @RestController
-@RequestMapping("kmp/knowledgeGroup")
+@RequestMapping("/kmp/knowledgeGroup")
 public class KnowledgeGroupController extends BaseController {
     @Autowired
     private KnowledgeGroupService knowledgeGroupService;
 
     /**
      * 知识组列表
-     * <p>
+     * /kmp/knowledgeGroup/list
      * 根据查询条件分页查询知识组信息，返回统一表格数据格式。
      *
      * @param query 知识组查询条件
      * @return 分页查询结果（含知识组记录列表与总条数）
      */
-    @PreAuthorize("@ss.hasPermi('system:post:list')")
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:list')")
     @GetMapping("/list")
     public TableDataInfo list(KnowledgeGroup query) {
         // 构建分页对象
