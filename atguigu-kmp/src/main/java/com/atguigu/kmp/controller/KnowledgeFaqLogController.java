@@ -10,7 +10,7 @@ import com.ruoyi.common.core.controller.BaseController;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-20
+ * @since 2026-10-21
  */
 @RestController
 @RequestMapping("/knowledgeFaqLog")

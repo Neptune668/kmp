@@ -1,21 +1,28 @@
 package com.atguigu.kmp.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.*;
-import lombok.Data;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-
 /**
- * 知识组实体。
+ * <p>
+ * 知识组表
+ * </p>
+ *
+ * @author atguigu
+ * @since 2026-10-21
  */
-@Data
+@Getter
+@Setter
+@ToString
 @TableName("kmp_knowledge_group")
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class KnowledgeGroup implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -24,52 +31,41 @@ public class KnowledgeGroup implements Serializable {
      * 主键ID
      */
     @TableId(value = "id", type = IdType.AUTO)
-    @Positive(message = "知识组 ID 不正确")
     private Long id;
 
     /**
      * 知识组名称
      */
-    @NotBlank(message = "知识组名称不能为空")
-    @Size(max = 100, message = "知识组名称不能超过100个字符")
     private String knowledgeGroupName;
 
     /**
      * 知识组说明
      */
-    @Size(max = 500, message = "知识组说明不能超过500个字符")
     private String knowledgeGroupDesc;
 
     /**
      * 是否默认：0-否，1-是
      */
-    @NotNull(message = "是否默认不能为空")
-    @Min(value = 0, message = "是否默认值不正确")
-    @Max(value = 1, message = "是否默认值不正确")
-    private Integer isDefault;
+    private Byte isDefault;
 
     /**
-     * 创建人用户ID，只允许后端赋值。
-     *
+     * 创建人用户ID
      */
     private Long createUserId;
 
     /**
-     * 创建时间，只允许后端赋值。
+     * 创建时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
     /**
-     * 最后修改人用户ID，只允许后端赋值。
-     *
+     * 最后修改人用户ID
      */
     private Long updateUserId;
 
     /**
-     * 最后修改时间，只允许后端赋值。
+     * 最后修改时间
      */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updateTime;
 
     /**
@@ -77,16 +73,4 @@ public class KnowledgeGroup implements Serializable {
      */
     @TableLogic
     private Integer isDeleted;
-
-    /**
-     * 创建人名称，仅用于接口展示。
-     */
-    @TableField(exist = false)
-    private String createUserName;
-
-    /**
-     * 最后修改人名称，仅用于接口展示。
-     */
-    @TableField(exist = false)
-    private String updateUserName;
 }

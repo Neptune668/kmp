@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -15,12 +17,11 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-14
+ * @since 2026-10-21
  */
-/**
- * FAQ 成功访问日志实体，对应 kmp_knowledge_faq_log。
- */
-@Data
+@Getter
+@Setter
+@ToString
 @TableName("kmp_knowledge_faq_log")
 public class KnowledgeFaqLog implements Serializable {
 

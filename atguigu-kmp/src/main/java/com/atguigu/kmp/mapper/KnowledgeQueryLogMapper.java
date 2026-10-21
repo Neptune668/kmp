@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-20
+ * @since 2026-10-21
  */
 public interface KnowledgeQueryLogMapper extends BaseMapper<KnowledgeQueryLog> {
 

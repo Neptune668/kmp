@@ -42,15 +42,16 @@ public final class KmpCodeGenerator
                 .strategyConfig(builder -> builder
                         // 配置需要生成的所有表名
                         .addInclude(
+//                                "kmp_knowledge_auth",
+                                "kmp_knowledge_faq_log",
                                 "kmp_knowledge_group",
-                                "kmp_knowledge_unit",
                                 "kmp_knowledge_import_task",
-                                "kmp_knowledge_query_session",
-                                "kmp_knowledge_auth",
-                                "kmp_knowledge_question_cluster",
-                                "kmp_knowledge_question_cluster_check_task",
                                 "kmp_knowledge_query_log",
-                                "kmp_knowledge_faq_log")
+                                "kmp_knowledge_question_cluster",
+                                "kmp_knowledge_query_session",
+                                "kmp_knowledge_question_cluster_check_task",
+                                "kmp_knowledge_unit"
+                        )
                         .addTablePrefix("kmp_")
 
                         .entityBuilder()
