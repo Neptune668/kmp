@@ -60,6 +60,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- JUnit 5 单元测试，版本由 spring-boot-dependencies 统一管理。 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- 以下依赖仅用于开发阶段运行 MyBatis-Plus 代码生成器。 -->
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -74,11 +81,6 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-annotation</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
