@@ -13,6 +13,10 @@ import com.baomidou.mybatisplus.spring.service.IService;
  * @since 2026-10-21
  */
 public interface KnowledgeGroupService extends IService<KnowledgeGroup> {
-
+    /*
+    分页
+     */
     Page<KnowledgeGroup> pageKnowledgeGroups(Page<KnowledgeGroup> page, KnowledgeGroup query);
+
+    Long saveKnowledgeGroup(KnowledgeGroup post,Long i);
 }

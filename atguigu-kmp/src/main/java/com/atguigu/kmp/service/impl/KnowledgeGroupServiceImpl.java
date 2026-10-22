@@ -10,6 +10,8 @@ import com.ruoyi.common.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 /**
  * <p>
  * 知识组表 服务实现类
@@ -42,4 +44,33 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
         // 执行查询并返回结果
         return this.page(page, wrapper);
     }
+
+    @Override
+    public Long saveKnowledgeGroup(KnowledgeGroup knowledgeGroup, Long userId) {
+
+        boolean editing = knowledgeGroup.getId() != null;
+        log.info("开始{}知识组", editing ? "编辑" : "新增");
+
+        LocalDateTime now = LocalDateTime.now();
+        if (!editing) {
+            // 新增接口必须忽略客户端伪造的主键和全部只允许后端赋值的字段。
+            knowledgeGroup.setCreateUserId(userId);
+            //审计数据
+            knowledgeGroup.setCreateTime(now);
+            knowledgeGroup.setUpdateUserId(null);
+            knowledgeGroup.setUpdateTime(null);
+            knowledgeGroup.setIsDeleted(0);
+        } else {
+            //审计数据，修改
+            knowledgeGroup.setCreateTime(null);
+            knowledgeGroup.setUpdateUserId(userId);
+            knowledgeGroup.setUpdateTime(now);
+            knowledgeGroup.setIsDeleted(0);
+        }
+
+        this.saveOrUpdate(knowledgeGroup);
+        return knowledgeGroup.getId();
+    }
+
+
 }

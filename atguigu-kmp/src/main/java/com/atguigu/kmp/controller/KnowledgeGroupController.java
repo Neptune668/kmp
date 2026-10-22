@@ -3,16 +3,18 @@ package com.atguigu.kmp.controller;
 import com.atguigu.kmp.entity.KnowledgeGroup;
 import com.atguigu.kmp.service.KnowledgeGroupService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
+import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.PageDomain;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.page.TableSupport;
+import com.ruoyi.common.enums.BusinessType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -54,5 +56,20 @@ public class KnowledgeGroupController extends BaseController {
         rspData.setMsg("查询成功");
 
         return rspData;
+    }
+
+    /**
+     *
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:add')")
+    @PostMapping
+    @Log(title = "列表添加", businessType = BusinessType.INSERT)
+
+    public AjaxResult add(@Validated @RequestBody KnowledgeGroup knowledgeGroup)
+    {
+        // 即使客户端传入主键，新增接口也只执行 INSERT。
+        knowledgeGroup.setId(null);
+        Long id = knowledgeGroupService.saveKnowledgeGroup(knowledgeGroup, getUserId());
+        return AjaxResult.success("新增知识组成功", id);
     }
 }
