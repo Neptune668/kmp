@@ -6,6 +6,7 @@ import com.atguigu.kmp.service.KnowledgeGroupService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,7 +62,11 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
             knowledgeGroup.setUpdateTime(null);
             knowledgeGroup.setIsDeleted(0);
         } else {
+            if(this.getById(knowledgeGroup.getId()) == null){
+                throw new ServiceException("知识组不存在");
+            }
             //审计数据，修改
+            knowledgeGroup.setCreateUserId(null);
             knowledgeGroup.setCreateTime(null);
             knowledgeGroup.setUpdateUserId(userId);
             knowledgeGroup.setUpdateTime(now);

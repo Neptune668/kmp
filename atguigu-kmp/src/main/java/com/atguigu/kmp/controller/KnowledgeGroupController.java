@@ -59,7 +59,13 @@ public class KnowledgeGroupController extends BaseController {
     }
 
     /**
+     * 新增知识组
+     * POST /kmp/knowledgeGroup
+     * 保存一条知识组记录；即使客户端传入主键 id 也会被忽略，
+     * 统一按新增处理，主键由数据库自增生成。
      *
+     * @param knowledgeGroup 知识组信息（id 会被后端强制置空）
+     * @return 操作结果，成功时附带新增记录的主键 ID
      */
     @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:add')")
     @PostMapping
@@ -72,4 +78,7 @@ public class KnowledgeGroupController extends BaseController {
         Long id = knowledgeGroupService.saveKnowledgeGroup(knowledgeGroup, getUserId());
         return AjaxResult.success("新增知识组成功", id);
     }
+
+    
+    
 }
