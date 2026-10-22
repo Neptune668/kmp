@@ -54,6 +54,12 @@
             <artifactId>ruoyi-generator</artifactId>
         </dependency>
 
+        <!-- 知识库业务模块-->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>atguigu-kmp</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

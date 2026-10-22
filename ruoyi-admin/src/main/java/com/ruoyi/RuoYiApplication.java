@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
  */
 
 @SpringBootApplication(
+        scanBasePackages = {"com.ruoyi", "com.atguigu"},
         exclude = { DataSourceAutoConfiguration.class })
 public class RuoYiApplication
 {
