@@ -61,8 +61,9 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
             knowledgeGroup.setUpdateUserId(null);
             knowledgeGroup.setUpdateTime(null);
             knowledgeGroup.setIsDeleted(0);
-        } else {
-            if(this.getById(knowledgeGroup.getId()) == null){
+        } 
+        else {
+            if (this.getById(knowledgeGroup.getId()) == null) {
                 throw new ServiceException("知识组不存在");
             }
             //审计数据，修改
@@ -73,9 +74,18 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
             knowledgeGroup.setIsDeleted(0);
         }
 
+        // 如果当前知识组被设置为默认知识组，则将其他知识组的默认设置取消
+        if (Integer.valueOf(1).equals(knowledgeGroup.getIsDefault())) {
+            Long currentId = knowledgeGroup.getId();
+            this.lambdaUpdate()
+                    .eq(KnowledgeGroup::getIsDefault, 1)
+                    .ne(currentId != null, KnowledgeGroup::getId, currentId)
+                    .set(KnowledgeGroup::getIsDefault, 0)
+                    .set(KnowledgeGroup::getUpdateUserId, userId)
+                    .set(KnowledgeGroup::getUpdateTime, now)
+                    .update();
+        }
         this.saveOrUpdate(knowledgeGroup);
         return knowledgeGroup.getId();
     }
-
-
 }

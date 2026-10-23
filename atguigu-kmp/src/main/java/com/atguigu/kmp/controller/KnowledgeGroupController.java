@@ -11,6 +11,7 @@ import com.ruoyi.common.core.page.PageDomain;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.page.TableSupport;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.exception.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -70,15 +71,35 @@ public class KnowledgeGroupController extends BaseController {
     @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:add')")
     @PostMapping
     @Log(title = "列表添加", businessType = BusinessType.INSERT)
-
-    public AjaxResult add(@Validated @RequestBody KnowledgeGroup knowledgeGroup)
-    {
+    public AjaxResult add(@Validated @RequestBody KnowledgeGroup knowledgeGroup) {
         // 即使客户端传入主键，新增接口也只执行 INSERT。
         knowledgeGroup.setId(null);
         Long id = knowledgeGroupService.saveKnowledgeGroup(knowledgeGroup, getUserId());
         return AjaxResult.success("新增知识组成功", id);
     }
 
-    
-    
+//    kmp/knowledgeGroup/9
+
+    /**
+     * 修改知识组
+     * PUT /kmp/knowledgeGroup/9
+     * 根据主键 ID 更新一条知识组记录。
+     *
+     * @param
+     * @param knowledgeGroup 知识组信息（id 必须与路径参数 id 一致）
+     * @return 操作结果
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:edit')")
+    @Log(title = "知识组管理", businessType = BusinessType.UPDATE)
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody KnowledgeGroup knowledgeGroup)
+    {
+        if (knowledgeGroup.getId() == null)
+        {
+            throw new ServiceException("知识组 ID 不正确");
+        }
+        knowledgeGroupService.saveKnowledgeGroup(knowledgeGroup, this.getUserId());
+
+        return AjaxResult.success("修改知识组成功");
+    }
 }
