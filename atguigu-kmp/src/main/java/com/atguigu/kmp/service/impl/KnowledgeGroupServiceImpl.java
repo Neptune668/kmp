@@ -8,7 +8,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,6 +26,8 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper, KnowledgeGroup> implements KnowledgeGroupService {
+    @Autowired
+    private ISysUserService userService;
 
     @Override
     public Page<KnowledgeGroup> pageKnowledgeGroups(Page<KnowledgeGroup> page, KnowledgeGroup query) {
@@ -61,8 +65,7 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
             knowledgeGroup.setUpdateUserId(null);
             knowledgeGroup.setUpdateTime(null);
             knowledgeGroup.setIsDeleted(0);
-        } 
-        else {
+        } else {
             if (this.getById(knowledgeGroup.getId()) == null) {
                 throw new ServiceException("知识组不存在");
             }
@@ -88,4 +91,34 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
         this.saveOrUpdate(knowledgeGroup);
         return knowledgeGroup.getId();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public KnowledgeGroup getKnowledgeGroupDetail(Long id) {
+//        error
+        log.info("getKnowledgeGroupDetail id: {}", id); //日志执行时才渲染结果
+//        log.info("getKnowledgeGroupDetail id: " + id); //无论是否执行都提前渲染结果
+
+        KnowledgeGroup knowledgeGroup = this.getById(id);
+        if (knowledgeGroup == null) {
+            throw new ServiceException("知识组不存在或已经被删除");
+        }
+
+        knowledgeGroup.setCreateUserName(findUserDisplayName(knowledgeGroup.getCreateUserId()));
+        knowledgeGroup.setUpdateUserName(findUserDisplayName(knowledgeGroup.getUpdateUserId()));
+
+
+        return knowledgeGroup;
+    }
+
+    private String findUserDisplayName(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        return userService.selectUserById(userId).getNickName();
+    }
+
+
 }

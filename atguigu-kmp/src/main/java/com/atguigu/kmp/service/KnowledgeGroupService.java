@@ -19,4 +19,6 @@ public interface KnowledgeGroupService extends IService<KnowledgeGroup> {
     Page<KnowledgeGroup> pageKnowledgeGroups(Page<KnowledgeGroup> page, KnowledgeGroup query);
 
     Long saveKnowledgeGroup(KnowledgeGroup post,Long i);
+
+    KnowledgeGroup getKnowledgeGroupDetail(Long id);
 }

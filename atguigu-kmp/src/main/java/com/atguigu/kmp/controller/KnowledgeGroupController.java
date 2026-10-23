@@ -84,8 +84,6 @@ public class KnowledgeGroupController extends BaseController {
      * 修改知识组
      * PUT /kmp/knowledgeGroup/9
      * 根据主键 ID 更新一条知识组记录。
-     *
-     * @param
      * @param knowledgeGroup 知识组信息（id 必须与路径参数 id 一致）
      * @return 操作结果
      */
@@ -102,4 +100,23 @@ public class KnowledgeGroupController extends BaseController {
 
         return AjaxResult.success("修改知识组成功");
     }
+
+    /**
+     * 查询知识组详情。
+     *
+     * @param id 知识组 ID
+     * @return 知识组详情
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:query')")
+    @Log(title = "知识组管理", businessType = BusinessType.DETAIL)
+    @GetMapping("/{id}")
+    public AjaxResult getInfo(@PathVariable Long id)
+    {
+        // 调用服务层方法，获取知识组详情
+        KnowledgeGroup knowledgeGroup = knowledgeGroupService.getKnowledgeGroupDetail(id);
+        // 返回成功响应
+        return AjaxResult.success(knowledgeGroup);
+    }
+
+
 }
