@@ -17,6 +17,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * <p>
  * 知识组表 前端控制器
@@ -133,4 +135,18 @@ public class KnowledgeGroupController extends BaseController {
         return AjaxResult.success("删除知识组成功");
     }
 
+    /**
+     * 查询未删除知识组下拉列表。
+     * GET /kmp/knowledgeGroup/groupOptions
+     * 供其他位置（如知识单元）的下拉框选择使用。
+     *
+     * @return 知识组选项列表
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:list')")
+    @GetMapping("/groupOptions")
+    public AjaxResult groupOptions()
+    {
+        List<KnowledgeGroup> list = knowledgeGroupService.listSelectableKnowledgeGroups();
+        return AjaxResult.success(list);
+    }
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -30,6 +31,9 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
     @Autowired
     private ISysUserService userService;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Page<KnowledgeGroup> pageKnowledgeGroups(Page<KnowledgeGroup> page, KnowledgeGroup query) {
         log.info("分页查询知识组列表");
@@ -51,6 +55,9 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
         return this.page(page, wrapper);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Long saveKnowledgeGroup(KnowledgeGroup knowledgeGroup, Long userId) {
 
@@ -144,7 +151,20 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
                 .set(KnowledgeGroup::getUpdateTime, LocalDateTime.now())
                 .update();
     }
-    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<KnowledgeGroup> listSelectableKnowledgeGroups() {
+        log.info("查询未删除知识组，供下拉列表选择");
+
+        // 实体上已配置 @TableLogic，查询时会自动过滤 isDeleted = 1 的记录。
+        LambdaQueryWrapper<KnowledgeGroup> wrapper = new LambdaQueryWrapper<KnowledgeGroup>()
+                .orderByDesc(KnowledgeGroup::getUpdateTime)
+                .orderByDesc(KnowledgeGroup::getId);
+
+        return this.list(wrapper);
+    }
 
     private String findUserDisplayName(Long userId) {
         if (userId == null) {
