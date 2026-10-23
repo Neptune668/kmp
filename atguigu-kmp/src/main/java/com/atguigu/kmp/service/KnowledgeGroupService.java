@@ -21,4 +21,8 @@ public interface KnowledgeGroupService extends IService<KnowledgeGroup> {
     Long saveKnowledgeGroup(KnowledgeGroup post,Long i);
 
     KnowledgeGroup getKnowledgeGroupDetail(Long id);
+
+    Boolean removeKnowledgeGroup(Long id, Long userId);
+
+
 }

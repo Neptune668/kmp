@@ -118,5 +118,19 @@ public class KnowledgeGroupController extends BaseController {
         return AjaxResult.success(knowledgeGroup);
     }
 
+    /**
+     * 删除知识组。
+     *
+     * @param id 知识组 ID
+     * @return 删除结果
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:remove')")
+    @Log(title = "知识组管理", businessType = BusinessType.DELETE)
+    @DeleteMapping("/{id}")
+    public AjaxResult remove(@PathVariable Long id)
+    {
+        knowledgeGroupService.removeKnowledgeGroup(id, this.getUserId());
+        return AjaxResult.success("删除知识组成功");
+    }
 
 }

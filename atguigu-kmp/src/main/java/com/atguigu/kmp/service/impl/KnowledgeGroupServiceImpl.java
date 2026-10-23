@@ -12,6 +12,7 @@ import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -112,6 +113,38 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
 
         return knowledgeGroup;
     }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeKnowledgeGroup(Long id, Long userId)
+    {
+        log.info("删除知识组，userId={}，knowledgeGroupId={}", userId, id);
+
+        KnowledgeGroup knowledgeGroup = this.getById(id);
+        if (knowledgeGroup == null)
+        {
+            throw new ServiceException("知识组不存在或已删除");
+        }
+
+        if (Integer.valueOf(1).equals(knowledgeGroup.getIsDefault()))
+        {
+            log.warn("知识组删除被阻止，userId={}，knowledgeGroupId={}，reason=default", userId, id);
+            throw new ServiceException("默认知识组不能删除，请先取消默认设置");
+        }
+
+        // MP 的逻辑删除不修改审计字段
+        // 如果要修改审计字段，则需要自己写一个update操作
+//        return this.removeById(id);
+        return this.lambdaUpdate()
+                .eq(KnowledgeGroup::getId, id)
+                .set(KnowledgeGroup::getIsDeleted, 1)
+                // 手动修改审计字段
+                .set(KnowledgeGroup::getUpdateUserId, userId)
+                .set(KnowledgeGroup::getUpdateTime, LocalDateTime.now())
+                .update();
+    }
+    
 
     private String findUserDisplayName(Long userId) {
         if (userId == null) {
