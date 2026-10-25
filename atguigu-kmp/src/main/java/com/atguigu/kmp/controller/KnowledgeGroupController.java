@@ -17,77 +17,102 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * <p>
  * 知识组表 前端控制器
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
 @RestController
 @RequestMapping("/kmp/knowledgeGroup")
 public class KnowledgeGroupController extends BaseController {
+
     @Autowired
     private KnowledgeGroupService knowledgeGroupService;
 
     /**
      * 知识组列表
-     * /kmp/knowledgeGroup/list
-     * 根据查询条件分页查询知识组信息，返回统一表格数据格式。
-     *
-     * @param query 知识组查询条件
-     * @return 分页查询结果（含知识组记录列表与总条数）
      */
     @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:list')")
     @GetMapping("/list")
-    public TableDataInfo list(KnowledgeGroup query) {
-        // 构建分页对象
+    public TableDataInfo list(KnowledgeGroup query)
+    {
+
         PageDomain pageDomain = TableSupport.buildPageRequest();
         Integer pageNum = pageDomain.getPageNum();
         Integer pageSize = pageDomain.getPageSize();
-        Page<KnowledgeGroup> page = new Page<>(pageNum, pageSize);
 
-        // 执行分页查询
+        Page<KnowledgeGroup> page = new Page<>(pageNum, pageSize);
         Page<KnowledgeGroup> result = knowledgeGroupService.pageKnowledgeGroups(page, query);
 
-        // 封装统一响应结果
-        TableDataInfo rspData = new TableDataInfo(result.getRecords(), result.getTotal());
-        rspData.setCode(HttpStatus.SUCCESS);
-        rspData.setMsg("查询成功");
+        TableDataInfo response = new TableDataInfo(result.getRecords(), result.getTotal());
+        response.setCode(HttpStatus.SUCCESS);
+        response.setMsg("查询结果成功");
 
-        return rspData;
+        return response;
     }
 
+//    /**
+//     * 新增知识组。
+//     *
+//     * @param knowledgeGroup 新增数据
+//     * @return 新增结果及数据库生成的 ID
+//     */
+//    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:add')")
+//    @Log(title = "知识组管理", businessType = BusinessType.INSERT)
+//    @PostMapping
+//    public AjaxResult add(@Validated @RequestBody KnowledgeGroup knowledgeGroup)
+//    {
+//        // 即使客户端传入主键，新增接口也只执行 INSERT。
+//        knowledgeGroup.setId(null);
+//        Long id = knowledgeGroupService.saveKnowledgeGroup(knowledgeGroup, this.getUserId());
+//        return AjaxResult.success("新增知识组成功", id);
+//    }
+//
+//    /**
+//     * 新增知识组。
+//     *
+//     * @param knowledgeGroup 新增数据
+//     * @return 新增结果及数据库生成的 ID
+//     */
+//    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:add')")
+//    @Log(title = "知识组管理", businessType = BusinessType.INSERT)
+//    @PostMapping
+//    public AjaxResult edit(@Validated @RequestBody KnowledgeGroup knowledgeGroup)
+//    {
+//        boolean result = knowledgeGroupService.updateKnowledgeGroup(knowledgeGroup, this.getUserId());
+//        if(result){
+//            return AjaxResult.success("修改知识组成功");
+//        }else {
+//            return AjaxResult.error("修改知识组失败");
+//        }
+//    }
+
+
     /**
-     * 新增知识组
-     * POST /kmp/knowledgeGroup
-     * 保存一条知识组记录；即使客户端传入主键 id 也会被忽略，
-     * 统一按新增处理，主键由数据库自增生成。
+     * 新增知识组。
      *
-     * @param knowledgeGroup 知识组信息（id 会被后端强制置空）
-     * @return 操作结果，成功时附带新增记录的主键 ID
+     * @param knowledgeGroup 新增数据
+     * @return 新增结果及数据库生成的 ID
      */
     @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:add')")
+    @Log(title = "知识组管理", businessType = BusinessType.INSERT)
     @PostMapping
-    @Log(title = "列表添加", businessType = BusinessType.INSERT)
-    public AjaxResult add(@Validated @RequestBody KnowledgeGroup knowledgeGroup) {
+    public AjaxResult add(@Validated @RequestBody KnowledgeGroup knowledgeGroup)
+    {
         // 即使客户端传入主键，新增接口也只执行 INSERT。
         knowledgeGroup.setId(null);
-        Long id = knowledgeGroupService.saveKnowledgeGroup(knowledgeGroup, getUserId());
+        Long id = knowledgeGroupService.saveKnowledgeGroup(knowledgeGroup, this.getUserId());
         return AjaxResult.success("新增知识组成功", id);
     }
 
-//    kmp/knowledgeGroup/9
-
     /**
-     * 修改知识组
-     * PUT /kmp/knowledgeGroup/9
-     * 根据主键 ID 更新一条知识组记录。
-     * @param knowledgeGroup 知识组信息（id 必须与路径参数 id 一致）
-     * @return 操作结果
+     * 编辑知识组。
+     *
+     * @param knowledgeGroup 编辑数据
+     * @return 修改结果
      */
     @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:edit')")
     @Log(title = "知识组管理", businessType = BusinessType.UPDATE)
@@ -136,17 +161,14 @@ public class KnowledgeGroupController extends BaseController {
     }
 
     /**
-     * 查询未删除知识组下拉列表。
-     * GET /kmp/knowledgeGroup/groupOptions
-     * 供其他位置（如知识单元）的下拉框选择使用。
+     * 查询未删除知识组，供其他位置的下拉列表选择。
      *
-     * @return 知识组选项列表
+     * @return 知识组选项
      */
-    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:list')")
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeGroup:list')") // 权限校验
     @GetMapping("/groupOptions")
     public AjaxResult groupOptions()
     {
-        List<KnowledgeGroup> list = knowledgeGroupService.listSelectableKnowledgeGroups();
-        return AjaxResult.success(list);
+        return AjaxResult.success(knowledgeGroupService.listKnowledgeGroupOptions());
     }
 }
