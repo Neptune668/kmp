@@ -23,70 +23,120 @@ import java.util.List;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
-@Slf4j
 @Service
+@Slf4j
 public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper, KnowledgeGroup> implements KnowledgeGroupService {
+
+//    @Autowired
+//    private KnowledgeGroupMapper knowledgeGroupMapper;
+
     @Autowired
     private ISysUserService userService;
 
-    /**
-     * {@inheritDoc}
-     */
+    @Autowired
+    private ISysUserService sysUserService;
+
+//    @Override
+//    public Page<KnowledgeGroup> pageKnowledgeGroups(Page<KnowledgeGroup> page, KnowledgeGroup query) {
+//        String knowledgeGroupName = query.getKnowledgeGroupName();
+//        String normalizedName = StringUtils.trimToNull(knowledgeGroupName);
+//
+//        LambdaQueryWrapper<KnowledgeGroup> queryWrapper = new LambdaQueryWrapper<KnowledgeGroup>()
+//                .like(normalizedName != null, KnowledgeGroup::getKnowledgeGroupName, knowledgeGroupName)
+//
+//                .orderByDesc(KnowledgeGroup::getCreateTime)
+//                .orderByDesc(KnowledgeGroup::getId);
+//
+//        return this.page(page, queryWrapper);
+//    }
+
     @Override
     public Page<KnowledgeGroup> pageKnowledgeGroups(Page<KnowledgeGroup> page, KnowledgeGroup query) {
-        log.info("分页查询知识组列表");
+        String knowledgeGroupName = query.getKnowledgeGroupName();
 
-        // 获取知识组名称, 去除空格, 或将空字符串转为null
-        String normalizedName = StringUtils.trimToNull(query.getKnowledgeGroupName());
+        LambdaQueryWrapper<KnowledgeGroup> queryWrapper = new LambdaQueryWrapper<KnowledgeGroup>()
 
-        // 构建查询条件
-        LambdaQueryWrapper<KnowledgeGroup> wrapper = new LambdaQueryWrapper<KnowledgeGroup>()
+                // 鼻涕先进行逻辑判断：要检索的字段是否是null，否则 like中可能会拼接 %null% 字符串，造成查询失败
+                .like(StringUtils.hasText(knowledgeGroupName), KnowledgeGroup::getKnowledgeGroupName, knowledgeGroupName)
 
-                // like 的第一个参数就是开关，为空时不会拼接对应条件。
-                .like(normalizedName != null, KnowledgeGroup::getKnowledgeGroupName, normalizedName)
-
-                // 按照更新时间降序排序, 按照ID降序排序
-                .orderByDesc(KnowledgeGroup::getUpdateTime)
+                .orderByDesc(KnowledgeGroup::getCreateTime)
                 .orderByDesc(KnowledgeGroup::getId);
 
-        // 执行查询并返回结果
-        return this.page(page, wrapper);
+        return this.page(page, queryWrapper);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+//    @Override
+//    public Long saveKnowledgeGroup(KnowledgeGroup knowledgeGroup, Long userId) {
+//
+//        LocalDateTime now = LocalDateTime.now();
+//
+//        // 新增
+//        knowledgeGroup.setCreateUserId(userId);
+//
+//        // 审计数据
+//        // 如果允许数据库产品切换，那么时间审计字段的管理就不能放在数据库级别进行维护，需要在业务中进行控制
+//        knowledgeGroup.setCreateTime(now);
+//        knowledgeGroup.setUpdateUserId(null);
+//        knowledgeGroup.setUpdateTime(null);
+//        knowledgeGroup.setIsDeleted(0);
+//
+//        this.save(knowledgeGroup);
+//        return knowledgeGroup.getId();
+//    }
+//
+//    @Override
+//    public boolean updateKnowledgeGroup(KnowledgeGroup knowledgeGroup, Long userId) {
+//
+//        LocalDateTime now = LocalDateTime.now();
+//        // 审计数据
+//        knowledgeGroup.setCreateUserId(null);
+//        knowledgeGroup.setCreateTime(null);
+//        knowledgeGroup.setUpdateUserId(userId);
+//        knowledgeGroup.setUpdateTime(now);
+//        knowledgeGroup.setIsDeleted(null);
+//
+//        return this.updateById(knowledgeGroup);
+//
+//    }
+
     @Override
     public Long saveKnowledgeGroup(KnowledgeGroup knowledgeGroup, Long userId) {
 
+
         boolean editing = knowledgeGroup.getId() != null;
-        log.info("开始{}知识组", editing ? "编辑" : "新增");
 
         LocalDateTime now = LocalDateTime.now();
-        if (!editing) {
-            // 新增接口必须忽略客户端伪造的主键和全部只允许后端赋值的字段。
+        if (!editing){
+            // 新增
             knowledgeGroup.setCreateUserId(userId);
-            //审计数据
+
+            // 审计数据
+            // 如果允许数据库产品切换，那么时间审计字段的管理就不能放在数据库级别进行维护，需要在业务中进行控制
             knowledgeGroup.setCreateTime(now);
             knowledgeGroup.setUpdateUserId(null);
             knowledgeGroup.setUpdateTime(null);
             knowledgeGroup.setIsDeleted(0);
-        } else {
-            if (this.getById(knowledgeGroup.getId()) == null) {
+        }else{
+
+            // 修改
+            if(this.getById(knowledgeGroup.getId()) == null){
                 throw new ServiceException("知识组不存在");
             }
-            //审计数据，修改
+
+            // 审计数据
             knowledgeGroup.setCreateUserId(null);
             knowledgeGroup.setCreateTime(null);
             knowledgeGroup.setUpdateUserId(userId);
             knowledgeGroup.setUpdateTime(now);
-            knowledgeGroup.setIsDeleted(0);
+            knowledgeGroup.setIsDeleted(null);
         }
 
+
         // 如果当前知识组被设置为默认知识组，则将其他知识组的默认设置取消
-        if (Integer.valueOf(1).equals(knowledgeGroup.getIsDefault())) {
+        if (Integer.valueOf(1).equals(knowledgeGroup.getIsDefault()))
+        {
             Long currentId = knowledgeGroup.getId();
             this.lambdaUpdate()
                     .eq(KnowledgeGroup::getIsDefault, 1)
@@ -96,13 +146,13 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
                     .set(KnowledgeGroup::getUpdateTime, now)
                     .update();
         }
+
+
         this.saveOrUpdate(knowledgeGroup);
         return knowledgeGroup.getId();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public KnowledgeGroup getKnowledgeGroupDetail(Long id) {
 //        error
@@ -110,7 +160,7 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
 //        log.info("getKnowledgeGroupDetail id: " + id); //无论是否执行都提前渲染结果
 
         KnowledgeGroup knowledgeGroup = this.getById(id);
-        if (knowledgeGroup == null) {
+        if (knowledgeGroup == null){
             throw new ServiceException("知识组不存在或已经被删除");
         }
 
@@ -121,10 +171,17 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
         return knowledgeGroup;
     }
 
+    private String findUserDisplayName(Long userId) {
+        if( userId == null){
+            return null;
+        }
+        return userService.selectUserById(userId).getNickName();
+    }
+
     /** {@inheritDoc} */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean removeKnowledgeGroup(Long id, Long userId)
+    public boolean removeKnowledgeGroup(Long id, Long userId)
     {
         log.info("删除知识组，userId={}，knowledgeGroupId={}", userId, id);
 
@@ -142,36 +199,27 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
 
         // MP 的逻辑删除不修改审计字段
         // 如果要修改审计字段，则需要自己写一个update操作
-//        return this.removeById(id);
-        return this.lambdaUpdate()
-                .eq(KnowledgeGroup::getId, id)
-                .set(KnowledgeGroup::getIsDeleted, 1)
-                // 手动修改审计字段
-                .set(KnowledgeGroup::getUpdateUserId, userId)
-                .set(KnowledgeGroup::getUpdateTime, LocalDateTime.now())
-                .update();
+        return this.removeById(id);
     }
-    /**
-     * {@inheritDoc}
-     */
+
+    /** {@inheritDoc} */
     @Override
-    public List<KnowledgeGroup> listSelectableKnowledgeGroups() {
-        log.info("查询未删除知识组，供下拉列表选择");
-
-        // 实体上已配置 @TableLogic，查询时会自动过滤 isDeleted = 1 的记录。
-        LambdaQueryWrapper<KnowledgeGroup> wrapper = new LambdaQueryWrapper<KnowledgeGroup>()
-                .orderByDesc(KnowledgeGroup::getUpdateTime)
-                .orderByDesc(KnowledgeGroup::getId);
-
-        return this.list(wrapper);
+    public List<KnowledgeGroup> listKnowledgeGroupOptions()
+    {
+        List<KnowledgeGroup> groupOptions = this.lambdaQuery()
+                // 这里只查三列，够选择知识组即可。
+                .select(
+                        KnowledgeGroup::getId,
+                        KnowledgeGroup::getKnowledgeGroupName,
+                        KnowledgeGroup::getIsDefault
+                )
+                // 先按 `isDefault` 倒序，默认组自然排到最前面
+                .orderByDesc(KnowledgeGroup::getIsDefault)
+                // 名称相同时再用 ID 保证顺序稳定。
+                .orderByAsc(KnowledgeGroup::getKnowledgeGroupName)
+                .orderByAsc(KnowledgeGroup::getId)
+                .list();
+        return groupOptions;
     }
-
-    private String findUserDisplayName(Long userId) {
-        if (userId == null) {
-            return null;
-        }
-        return userService.selectUserById(userId).getNickName();
-    }
-
 
 }
