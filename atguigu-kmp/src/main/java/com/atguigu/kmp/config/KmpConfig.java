@@ -14,19 +14,18 @@ import org.springframework.context.annotation.Configuration;
 @MapperScan("com.atguigu.kmp.mapper")
 public class KmpConfig {
 
+    /** MinIO 公网访问端点，不包对象路径。 */
+    @Value("${kmp.minio-public-endpoint}")
+    private String minioPublicEndpoint;
+
     /**
      * 注册 MySQL 分页插件；分页插件应保持为内部插件链的最后一项。
      *
      * @return MyBatis-Plus 插件链
      */
-    /**
-     * MinIO 公网访问端点，不包对象路径。
-     */
-    @Value("${kmp.minio-public-endpoint}")
-    private String minioPublicEndpoint;
-
     @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+    public MybatisPlusInterceptor mybatisPlusInterceptor()
+    {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         return interceptor;

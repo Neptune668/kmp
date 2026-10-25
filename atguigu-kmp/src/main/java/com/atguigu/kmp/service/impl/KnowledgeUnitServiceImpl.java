@@ -7,15 +7,18 @@ import com.atguigu.kmp.mapper.KnowledgeUnitMapper;
 import com.atguigu.kmp.service.KnowledgeGroupService;
 import com.atguigu.kmp.service.KnowledgeUnitService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,60 +29,106 @@ import java.util.Map;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
-@Slf4j
 @Service
+@Slf4j
 public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, KnowledgeUnit> implements KnowledgeUnitService {
 
+
     @Autowired
-    private ISysUserService userService;
+    private KnowledgeGroupService knowledgeGroupService;
 
     @Autowired
     private KmpConfig kmpConfig;
 
     @Autowired
-    private KnowledgeGroupService knowledgeGroupService;
-
-    /**
-     * {@inheritDoc}
-     */
+    private ISysUserService sysUserService;
+    /** {@inheritDoc} */
     @Override
-    public Page<KnowledgeUnit> pageKnowledgeUnits(Page<KnowledgeUnit> page, KnowledgeUnit query) {
-        log.info("分页查询知识单元列表");
+    public IPage<KnowledgeUnit> pageKnowledgeUnits(Page<KnowledgeUnit> page, KnowledgeUnit query)
+    {
+        log.info("开始分页查询知识单元，pageNum={}，pageSize={}", page.getCurrent(), page.getSize());
+        // 获取知识单元名称, 去除空格, 或将空字符串转为null
+        String knowledgeUnitName = StringUtils.trimToNull(query.getKnowledgeUnitName());
 
-        // 获取查询条件，去除空格或将空字符串转为 null
-        String normalizedName = StringUtils.trimToNull(query.getKnowledgeUnitName());
-        String normalizedDocumentId = StringUtils.trimToNull(query.getDocumentId());
-
-        // 构建查询条件
         LambdaQueryWrapper<KnowledgeUnit> wrapper = new LambdaQueryWrapper<KnowledgeUnit>()
-                // 知识单元名称模糊查询
-                .like(normalizedName != null, KnowledgeUnit::getKnowledgeUnitName, normalizedName)
-                // 所属知识组精确查询
+
+                // like 和 eq 的第一个参数就是开关，为空时不会拼接对应条件。
+                .like(knowledgeUnitName != null, KnowledgeUnit::getKnowledgeUnitName, knowledgeUnitName)
                 .eq(query.getKnowledgeGroupId() != null, KnowledgeUnit::getKnowledgeGroupId, query.getKnowledgeGroupId())
-                // 外部文档ID精确查询
-                .eq(normalizedDocumentId != null, KnowledgeUnit::getDocumentId, normalizedDocumentId)
-                // 按更新时间、ID 降序排序
                 .orderByDesc(KnowledgeUnit::getUpdateTime)
                 .orderByDesc(KnowledgeUnit::getId);
 
-        // 执行查询并返回结果
-        Page<KnowledgeUnit> result = this.page(page, wrapper);
+        // 执行分页查询
+        IPage<KnowledgeUnit> result = this.page(page, wrapper);
 
-        // 补充知识组名称
-        fillKnowledgeGroupNames(result.getRecords());
+        // 补知识组名称
+        this.fillKnowledgeGroupNames(result.getRecords());
+        // 补充文档下载地址
+        this.fillOriginalFileDownloadUrls(result.getRecords());
 
-        //补充下载链接
-        fillOriginalFileDownloadUrls(result.getRecords());
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Autowired
-    private ISysUserService sysUserService;
+    private void fillOriginalFileDownloadUrls(List<KnowledgeUnit> records) {
+
+        String minioPublicEndpoint = kmpConfig.getMinioPublicEndpoint();
+        for (KnowledgeUnit record : records) {
+            String originalFileDownloadUrl = minioPublicEndpoint + record.getOriginalFileDownloadUrl();
+            record.setOriginalFileDownloadUrl(originalFileDownloadUrl);
+        }
+
+    }
+
+//    private void fillKnowledgeGroupNames(List<KnowledgeUnit> records) {
+//
+//        // 遍历records
+//           // 根据之始祖id查询知识组名称
+//           // 设置到每一条记录中
+//        for (KnowledgeUnit record : records) {
+//
+//            Long knowledgeGroupId = record.getKnowledgeGroupId();
+//
+//            // 执行了一次数据库查询
+//            KnowledgeGroup knowledgeGroup = this.knowledgeGroupService.getById(knowledgeGroupId);
+//            record.setKnowledgeGroupName(knowledgeGroup.getKnowledgeGroupName());
+//        }
+//
+//    }
+
+    /** 批量补充当前页知识组名称，避免 N+1 查询。 */
+    private void fillKnowledgeGroupNames(List<KnowledgeUnit> knowledgeUnitList)
+    {
+        // 获取所有知识组 ID
+        List<Long> groupIds = knowledgeUnitList.stream()
+                .map(KnowledgeUnit::getKnowledgeGroupId)
+                .distinct()
+                .toList();
+        if (groupIds.isEmpty())
+        {
+            return;
+        }
+
+        // 创建知识组 id -> 名称 的映射
+        Map<Long, String> groupNameMap = new HashMap<>();
+
+        // 批量查询知识组名称
+        List<KnowledgeGroup> knowledgeGroupList = knowledgeGroupService.listByIds(groupIds);
+
+        // 填充知识组 id -> 名称 集合
+        for (KnowledgeGroup knowledgeGroup : knowledgeGroupList)
+        {
+            groupNameMap.put(knowledgeGroup.getId(), knowledgeGroup.getKnowledgeGroupName());
+        }
+
+        // 填充知识单元所属的知识组名称
+        for (KnowledgeUnit knowledgeUnit : knowledgeUnitList)
+        {
+            knowledgeUnit.setKnowledgeGroupName(groupNameMap.get(knowledgeUnit.getKnowledgeGroupId()));
+        }
+    }
+
 
 
     /** {@inheritDoc} */
@@ -112,35 +161,36 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
         return user == null ? null : user.getNickName();
     }
 
-    /** 批量补充当前页知识组名称，避免 N+1 查询。 */
-    private void fillKnowledgeGroupNames(List<KnowledgeUnit> knowledgeUnitList){
-        // 获取所有知识组 ID
-        List<Long> groupIds = knowledgeUnitList.stream()
-                .map(KnowledgeUnit::getKnowledgeGroupId)
-                .distinct()
-                .toList();
-        if (groupIds.isEmpty()){
-            return;
-        }
-        // 创建知识组 id -> 名称 的映射
-        Map<Long, String> groupNameMap = new HashMap<>();
-        List<KnowledgeGroup> knowledgeGroupList = knowledgeGroupService.listByIds(groupIds);
-        for (KnowledgeGroup knowledgeGroup : knowledgeGroupList) {
-            groupNameMap.put(knowledgeGroup.getId(), knowledgeGroup.getKnowledgeGroupName());
-        }
-        for (KnowledgeUnit knowledgeUnit : knowledgeUnitList) {
-            knowledgeUnit.setKnowledgeGroupName(groupNameMap.get(knowledgeUnit.getKnowledgeGroupId()));
-        }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long saveKnowledgeUnitBaseInfo(KnowledgeUnit knowledgeUnit, Long userId)
+    {
+        Long knowledgeUnitId = knowledgeUnit.getId();
+        log.info("开始修改知识单元基础信息，userId={}，knowledgeUnitId={}", userId, knowledgeUnitId);
+
+        // 只构造可编辑字段的更新条件，防止页面篡改文档标识、文件和统计。
+        this.lambdaUpdate()
+                .eq(KnowledgeUnit::getId, knowledgeUnitId)
+                //只修改字段白名单
+                .set(KnowledgeUnit::getKnowledgeUnitName, knowledgeUnit.getKnowledgeUnitName())
+                .set(KnowledgeUnit::getKnowledgeGroupId, knowledgeUnit.getKnowledgeGroupId())
+                .set(KnowledgeUnit::getUpdateUserId, userId)
+                .set(KnowledgeUnit::getUpdateTime, LocalDateTime.now())
+                .update();
+
+        return knowledgeUnitId;
     }
 
-    /** 为对外返回的知识单元批量补充 MinIO 完整下载地址。 */
-    private void fillOriginalFileDownloadUrls(List<KnowledgeUnit> knowledgeUnitList)
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean removeKnowledgeUnit(Long id)
     {
-        String endpoint = kmpConfig.getMinioPublicEndpoint();
-        for (KnowledgeUnit knowledgeUnit : knowledgeUnitList)
-        {
-            String downloadUrl = endpoint + knowledgeUnit.getOriginalFileDownloadUrl();
-            knowledgeUnit.setOriginalFileDownloadUrl(downloadUrl);
-        }
+        log.info("开始逻辑删除知识单元，knowledgeUnitId={}", id);
+
+        // TODO 删除知识单元下的全部切片信息
+        return this.removeById(id);
     }
 }
