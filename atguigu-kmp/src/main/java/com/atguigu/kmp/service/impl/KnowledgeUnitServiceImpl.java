@@ -1,5 +1,6 @@
 package com.atguigu.kmp.service.impl;
 
+import com.atguigu.kmp.config.KmpConfig;
 import com.atguigu.kmp.entity.KnowledgeGroup;
 import com.atguigu.kmp.entity.KnowledgeUnit;
 import com.atguigu.kmp.mapper.KnowledgeUnitMapper;
@@ -8,12 +9,16 @@ import com.atguigu.kmp.service.KnowledgeUnitService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
-import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -29,6 +34,9 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
 
     @Autowired
     private ISysUserService userService;
+
+    @Autowired
+    private KmpConfig kmpConfig;
 
     @Autowired
     private KnowledgeGroupService knowledgeGroupService;
@@ -57,43 +65,82 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
                 .orderByDesc(KnowledgeUnit::getId);
 
         // 执行查询并返回结果
-        return this.page(page, wrapper);
+        Page<KnowledgeUnit> result = this.page(page, wrapper);
+
+        // 补充知识组名称
+        fillKnowledgeGroupNames(result.getRecords());
+
+        //补充下载链接
+        fillOriginalFileDownloadUrls(result.getRecords());
+        return result;
     }
 
     /**
      * {@inheritDoc}
      */
+    @Autowired
+    private ISysUserService sysUserService;
+
+
+    /** {@inheritDoc} */
     @Override
-    public KnowledgeUnit getKnowledgeUnitDetail(Long id) {
-        log.info("getKnowledgeUnitDetail id: {}", id);
+    public KnowledgeUnit getKnowledgeUnitDetail(Long id)
+    {
+        log.info("开始查询知识单元详情，knowledgeUnitId={}", id);
 
         KnowledgeUnit knowledgeUnit = this.getById(id);
-        if (knowledgeUnit == null) {
-            throw new ServiceException("知识单元不存在或已经被删除");
-        }
+        KnowledgeGroup knowledgeGroup = knowledgeGroupService.getById(knowledgeUnit.getKnowledgeGroupId());
+        knowledgeUnit.setKnowledgeGroupName(knowledgeGroup == null ? null : knowledgeGroup.getKnowledgeGroupName());
+        knowledgeUnit.setCreateUserName(this.findUserDisplayName(knowledgeUnit.getCreateUserId()));
+        knowledgeUnit.setUpdateUserName(this.findUserDisplayName(knowledgeUnit.getUpdateUserId()));
 
-        // 填充仅用于接口展示的冗余字段：所属知识组名称、创建人/修改人名称
-        knowledgeUnit.setKnowledgeGroupName(findKnowledgeGroupName(knowledgeUnit.getKnowledgeGroupId()));
-        knowledgeUnit.setCreateUserName(findUserDisplayName(knowledgeUnit.getCreateUserId()));
-        knowledgeUnit.setUpdateUserName(findUserDisplayName(knowledgeUnit.getUpdateUserId()));
+        String endpoint = kmpConfig.getMinioPublicEndpoint();
+        String downloadUrl = endpoint + knowledgeUnit.getOriginalFileDownloadUrl();
+        knowledgeUnit.setOriginalFileDownloadUrl(downloadUrl);
 
         return knowledgeUnit;
     }
 
-    private String findUserDisplayName(Long userId) {
-        if (userId == null) {
+    /** 根据用户 ID 获取详情展示名称。 */
+    private String findUserDisplayName(Long userId)
+    {
+        if (userId == null)
+        {
             return null;
         }
-        return userService.selectUserById(userId).getNickName();
+        SysUser user = sysUserService.selectUserById(userId);
+        return user == null ? null : user.getNickName();
     }
 
-    private String findKnowledgeGroupName(Long knowledgeGroupId) {
-        if (knowledgeGroupId == null) {
-            return null;
+    /** 批量补充当前页知识组名称，避免 N+1 查询。 */
+    private void fillKnowledgeGroupNames(List<KnowledgeUnit> knowledgeUnitList){
+        // 获取所有知识组 ID
+        List<Long> groupIds = knowledgeUnitList.stream()
+                .map(KnowledgeUnit::getKnowledgeGroupId)
+                .distinct()
+                .toList();
+        if (groupIds.isEmpty()){
+            return;
         }
-        KnowledgeGroup knowledgeGroup = knowledgeGroupService.getById(knowledgeGroupId);
-        return knowledgeGroup == null ? null : knowledgeGroup.getKnowledgeGroupName();
+        // 创建知识组 id -> 名称 的映射
+        Map<Long, String> groupNameMap = new HashMap<>();
+        List<KnowledgeGroup> knowledgeGroupList = knowledgeGroupService.listByIds(groupIds);
+        for (KnowledgeGroup knowledgeGroup : knowledgeGroupList) {
+            groupNameMap.put(knowledgeGroup.getId(), knowledgeGroup.getKnowledgeGroupName());
+        }
+        for (KnowledgeUnit knowledgeUnit : knowledgeUnitList) {
+            knowledgeUnit.setKnowledgeGroupName(groupNameMap.get(knowledgeUnit.getKnowledgeGroupId()));
+        }
     }
 
-
+    /** 为对外返回的知识单元批量补充 MinIO 完整下载地址。 */
+    private void fillOriginalFileDownloadUrls(List<KnowledgeUnit> knowledgeUnitList)
+    {
+        String endpoint = kmpConfig.getMinioPublicEndpoint();
+        for (KnowledgeUnit knowledgeUnit : knowledgeUnitList)
+        {
+            String downloadUrl = endpoint + knowledgeUnit.getOriginalFileDownloadUrl();
+            knowledgeUnit.setOriginalFileDownloadUrl(downloadUrl);
+        }
+    }
 }
