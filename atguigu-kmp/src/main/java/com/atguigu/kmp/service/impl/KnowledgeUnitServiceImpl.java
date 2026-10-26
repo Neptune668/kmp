@@ -1,6 +1,7 @@
 package com.atguigu.kmp.service.impl;
 
 import com.atguigu.kmp.config.KmpConfig;
+import com.atguigu.kmp.constant.KnowledgeUnitConstants;
 import com.atguigu.kmp.entity.KnowledgeGroup;
 import com.atguigu.kmp.entity.KnowledgeUnit;
 import com.atguigu.kmp.mapper.KnowledgeUnitMapper;
@@ -192,5 +193,23 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
 
         // TODO 删除知识单元下的全部切片信息
         return this.removeById(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public KnowledgeUnit findByFileSha256(String fileSha256)
+    {
+        // 摘要为空或格式不合法时，直接视为不重复，交由调用方继续处理
+        if (fileSha256 == null || !KnowledgeUnitConstants.SHA256_PATTERN.matcher(fileSha256).matches())
+        {
+            return null;
+        }
+
+        // 逻辑删除由 @TableLogic 自动过滤，只命中未删除的知识单元
+        // 相同内容可能已导入多次，取第一条用于提示即可
+        return this.lambdaQuery()
+                .eq(KnowledgeUnit::getFileSha256, fileSha256)
+                .last("LIMIT 1")
+                .one();
     }
 }
