@@ -24,4 +24,14 @@ public interface KnowledgeImportTaskService extends IService<KnowledgeImportTask
      * @return 新任务 ID
      */
     Long initImportTask(KnowledgeImportTask task, Long userId);
+
+    /**
+     * 将外部服务返回的任务编号绑定到原平台任务。
+     *
+     * @param id 平台任务 ID
+     * @param externalTaskId 外部任务编号
+     * @param userId 当前用户 ID
+     * @return 绑定后的任务
+     */
+    KnowledgeImportTask bindExternalTask(Long id, String externalTaskId, Long userId);
 }

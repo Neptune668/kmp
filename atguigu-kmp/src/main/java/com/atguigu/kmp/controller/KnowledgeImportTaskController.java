@@ -94,4 +94,24 @@ public class KnowledgeImportTaskController extends BaseController {
         Long taskId = knowledgeImportTaskService.initImportTask(task, this.getUserId());
         return AjaxResult.success("初始化知识导入任务成功", taskId);
     }
+
+    /**
+     * 将外部服务返回的任务编号绑定到原平台任务。
+     *
+     * @param id   平台任务 ID
+     * @param task 外部任务编号
+     * @return 绑定后的平台任务
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeImport:import')")
+    @Log(title = "知识导入", businessType = BusinessType.UPDATE)
+    @PutMapping("/{id}/external-task")
+    public AjaxResult bindExternalTask(@PathVariable Long id,
+                                       @RequestBody KnowledgeImportTask task) {
+        KnowledgeImportTask boundTask = knowledgeImportTaskService.bindExternalTask(
+                id,
+                task.getExternalTaskId(),
+                this.getUserId()
+        );
+        return AjaxResult.success("绑定外部导入任务成功", boundTask);
+    }
 }

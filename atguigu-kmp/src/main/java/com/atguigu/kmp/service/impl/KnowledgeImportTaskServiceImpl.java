@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -100,6 +101,28 @@ public class KnowledgeImportTaskServiceImpl extends ServiceImpl<KnowledgeImportT
 //        return knowledgeImportTask.getId();
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public KnowledgeImportTask bindExternalTask(Long id, String externalTaskId, Long userId)
+    {
+        log.info("开始绑定外部知识导入任务，taskId={}，externalTaskId={}", id, externalTaskId);
+
+        LocalDateTime now = LocalDateTime.now();
+        boolean updated = lambdaUpdate()
+                .eq(KnowledgeImportTask::getId, id)
+                .eq(KnowledgeImportTask::getTaskStatus, KnowledgeImportConstants.TASK_STATUS_PENDING)
+                .isNull(KnowledgeImportTask::getExternalTaskId)
+                .set(KnowledgeImportTask::getExternalTaskId, externalTaskId)
+                .set(KnowledgeImportTask::getTaskStatus, KnowledgeImportConstants.TASK_STATUS_PROCESSING)
+                .set(KnowledgeImportTask::getUpdateUserId, userId)
+                .set(KnowledgeImportTask::getUpdateTime, now)
+                .update();
+        if (!updated)
+        {
+            throw new ServiceException("当前状态不允许绑定外部任务");
+        }
+        return this.getById(id);
+    }
     /** 批量补充当前页创建人名称，同一用户只查询一次，避免重复查询。 */
     private void fillCreateUserNames(List<KnowledgeImportTask> records)
     {
