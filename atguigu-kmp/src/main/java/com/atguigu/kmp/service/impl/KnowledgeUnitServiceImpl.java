@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -195,20 +196,24 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
         return this.removeById(id);
     }
 
-    /** {@inheritDoc} */
     @Override
-    public KnowledgeUnit findByFileSha256(String fileSha256)
-    {
-        // 摘要为空或格式不合法时，直接视为不重复，交由调用方继续处理
-        if (fileSha256 == null || !KnowledgeUnitConstants.SHA256_PATTERN.matcher(fileSha256).matches())
-        {
-            return null;
+    public KnowledgeUnit findBySha256(String fileSha256) {
+
+//        LambdaQueryWrapper<KnowledgeUnit> queryWrapper = new LambdaQueryWrapper<>();
+//        queryWrapper.select(KnowledgeUnit::getId, KnowledgeUnit::getKnowledgeUnitName);
+//        queryWrapper.eq(KnowledgeUnit::getFileSha256, fileSha256);
+////        KnowledgeUnit knowledgeUnit = baseMapper.selectOne(queryWrapper);
+//        return this.getOne(queryWrapper);  I i
+
+        // 防御性编程
+        String normalizedSha256 = fileSha256 == null ? null : fileSha256.trim().toLowerCase();
+        if(normalizedSha256 == null || !KnowledgeUnitConstants.SHA256_PATTERN.matcher(normalizedSha256).matches()){
+            throw new ServiceException("文件SHA-256格式不正确");
         }
 
-        // 逻辑删除由 @TableLogic 自动过滤，只命中未删除的知识单元
-        // 相同内容可能已导入多次，取第一条用于提示即可
         return this.lambdaQuery()
-                .eq(KnowledgeUnit::getFileSha256, fileSha256)
+                .select(KnowledgeUnit::getId, KnowledgeUnit::getKnowledgeUnitName)
+                .eq(KnowledgeUnit::getFileSha256, normalizedSha256)
                 .last("LIMIT 1")
                 .one();
     }

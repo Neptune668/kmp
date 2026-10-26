@@ -1,5 +1,6 @@
 package com.atguigu.kmp.service.impl;
 
+import com.atguigu.kmp.config.KmpConfig;
 import com.atguigu.kmp.constant.KnowledgeImportConstants;
 import com.atguigu.kmp.entity.KnowledgeImportTask;
 import com.atguigu.kmp.mapper.KnowledgeImportTaskMapper;
@@ -11,9 +12,10 @@ import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -26,153 +28,168 @@ import java.util.Map;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
-@Service
 @Slf4j
+@Service
 public class KnowledgeImportTaskServiceImpl extends ServiceImpl<KnowledgeImportTaskMapper, KnowledgeImportTask> implements KnowledgeImportTaskService {
 
     @Autowired
     private ISysUserService sysUserService;
 
+    @Autowired
+    @Qualifier("knowledgeSystemRestClient")
+    private RestClient restClient;
+
+    @Autowired
+    private KmpConfig kmpConfig;
+
     @Override
-    public Page<KnowledgeImportTask> pageKnowledgeImportTasks(Page<KnowledgeImportTask> page, KnowledgeImportTask query) {
+    public Page<KnowledgeImportTask> pageImportTask(Page<KnowledgeImportTask> page) {
 
-        log.info("开始分页查询知识导入任务，pageNum={}，pageSize={}", page.getCurrent(), page.getSize());
-
-        // 文件名支持模糊匹配，去空格并将空字符串转为 null，避免拼接 %null%
-        String fileName = StringUtils.trimToNull(query.getFileName());
-
-        LambdaQueryWrapper<KnowledgeImportTask> wrapper = new LambdaQueryWrapper<KnowledgeImportTask>()
-
-                // like 和 eq 的第一个参数就是开关，为 false 时不会拼接对应条件
-                .like(fileName != null, KnowledgeImportTask::getFileName, fileName)
-                .eq(query.getKnowledgeGroupId() != null, KnowledgeImportTask::getKnowledgeGroupId, query.getKnowledgeGroupId())
-                .eq(query.getKnowledgeUnitId() != null, KnowledgeImportTask::getKnowledgeUnitId, query.getKnowledgeUnitId())
-                .eq(query.getTaskStatus() != null, KnowledgeImportTask::getTaskStatus, query.getTaskStatus())
-                .eq(query.getCreateUserId() != null, KnowledgeImportTask::getCreateUserId, query.getCreateUserId())
-
-                // 先用创建时间排序，时间相同再用 ID 保证顺序稳定
+        LambdaQueryWrapper<KnowledgeImportTask> queryWrapper = new LambdaQueryWrapper<KnowledgeImportTask>()
                 .orderByDesc(KnowledgeImportTask::getCreateTime)
                 .orderByDesc(KnowledgeImportTask::getId);
 
-        Page<KnowledgeImportTask> result = this.page(page, wrapper);
+        Page<KnowledgeImportTask> result = this.page(page, queryWrapper);
 
-        // 补充创建人名称，仅用于列表展示
         this.fillCreateUserNames(result.getRecords());
 
         return result;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Long initImportTask(KnowledgeImportTask task, Long userId) {
-        log.info("开始初始化知识导入任务");
 
-        // 初始化接口只接受文件名和知识组，其余字段全部由平台重置，防止客户端越权赋值。
-        // 这样做是在划安全边界：调用方可以说明“文件叫什么、放进哪个组”，但不能伪造任务 ID、处理状态、创建人和完成时间。
         LocalDateTime now = LocalDateTime.now();
-        task.setId(null);
-        task.setKnowledgeUnitId(null);
-        task.setExternalTaskId(null);
-        task.setTaskStatus(KnowledgeImportConstants.TASK_STATUS_PENDING);
-        task.setTaskInfo(null);
-        task.setFailureReason(null);
-        task.setFinishTime(null);
-        task.setDurationMs(null);
-        task.setCreateUserId(userId);
-        task.setCreateTime(now);
-        task.setUpdateUserId(null);
-        task.setUpdateTime(null);
-        task.setIsDeleted(0);
-        task.setCreateUserName(null);
-        this.save(task);
-        return task.getId();
+//        task.setCreateUserId(userId);
+//        task.setCreateTime(now);
+//        task.setTaskStatus(KnowledgeImportConstants.TASK_STATUS_PENDING);
+//        task.setIsDeleted(0);
+//
+//        //防止客户端越权赋值
+//        task.setUpdateUserId(null);
+//        task.setUpdateTime(null);
+//        task.setId(null);
+//        //等等其他值全部设置为null
 
-//        KnowledgeImportTask knowledgeImportTask = new KnowledgeImportTask();
-//        knowledgeImportTask.setFileName(task.getFileName());
-//        knowledgeImportTask.setKnowledgeGroupId(task.getKnowledgeGroupId());
-//        knowledgeImportTask.setTaskStatus(KnowledgeImportConstants.TASK_STATUS_PENDING);
-//        knowledgeImportTask.setCreateUserId(userId);
-//        knowledgeImportTask.setCreateTime(now);
-//        knowledgeImportTask.setIsDeleted(0);
-//        this.save(knowledgeImportTask);
-//        return knowledgeImportTask.getId();
+        KnowledgeImportTask knowledgeImportTask = new KnowledgeImportTask();
+        knowledgeImportTask.setFileName(task.getFileName());
+        knowledgeImportTask.setKnowledgeGroupId(task.getKnowledgeGroupId());
+        knowledgeImportTask.setCreateUserId(userId);
+        knowledgeImportTask.setCreateTime(now);
+        knowledgeImportTask.setTaskStatus(KnowledgeImportConstants.TASK_STATUS_PENDING);
+        knowledgeImportTask.setIsDeleted(0);
+
+        this.save(knowledgeImportTask);
+        return knowledgeImportTask.getId();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public KnowledgeImportTask bindExternalTask(Long id, String externalTaskId, Long userId) {
-        log.info("开始绑定外部知识导入任务，taskId={}，externalTaskId={}", id, externalTaskId);
 
-        LocalDateTime now = LocalDateTime.now();
-        boolean updated = lambdaUpdate()
+//        KnowledgeImportTask task = this.getById(id);
+//        task.setExternalTaskId(externalTaskId);
+//        task.setTaskStatus(KnowledgeImportConstants.TASK_STATUS_PROCESSING);
+//        task.setUpdateUserId(userId);
+//        task.setUpdateTime(LocalDateTime.now());
+//        this.updateById(task);
+//        return task;
+
+        // 查找处理pending状态且尚未被绑定过的task值
+        boolean updated = this.lambdaUpdate()
                 .eq(KnowledgeImportTask::getId, id)
+
+                // 幂等判断：无论请求执行多少次，我们都希望最终产生的结果是一致的
                 .eq(KnowledgeImportTask::getTaskStatus, KnowledgeImportConstants.TASK_STATUS_PENDING)
                 .isNull(KnowledgeImportTask::getExternalTaskId)
+
                 .set(KnowledgeImportTask::getExternalTaskId, externalTaskId)
                 .set(KnowledgeImportTask::getTaskStatus, KnowledgeImportConstants.TASK_STATUS_PROCESSING)
-                .set(KnowledgeImportTask::getUpdateUserId, userId)
-                .set(KnowledgeImportTask::getUpdateTime, now)
+                .set(KnowledgeImportTask::getCreateUserId, userId)
+                .set(KnowledgeImportTask::getUpdateTime, LocalDateTime.now())
                 .update();
-        if (!updated) {
+
+        if(!updated){
             throw new ServiceException("当前状态不允许绑定外部任务");
         }
+
         return this.getById(id);
     }
 
-
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    public boolean removeImportTask(Long id) {
+    public boolean removeImportTask(Long id)
+    {
         log.info("开始移除知识导入任务");
         KnowledgeImportTask task = this.getById(id);
 
-        boolean pendingAndUnbound = KnowledgeImportConstants.TASK_STATUS_PENDING.equals(task.getTaskStatus())
-                && task.getExternalTaskId() == null;
+        boolean pendingAndUnbound = KnowledgeImportConstants.TASK_STATUS_PENDING.equals(task.getTaskStatus()) && task.getExternalTaskId() == null;
         boolean failed = KnowledgeImportConstants.TASK_STATUS_FAILED.equals(task.getTaskStatus());
-        if (!pendingAndUnbound && !failed) {
+        if (!pendingAndUnbound && !failed)
+        {
             throw new ServiceException("当前状态不允许移除");
         }
 
-
-        LambdaQueryWrapper<KnowledgeImportTask> queryWrapper = new LambdaQueryWrapper<KnowledgeImportTask>()
+        LambdaQueryWrapper<KnowledgeImportTask> updateWrapper = new LambdaQueryWrapper<KnowledgeImportTask>()
                 .eq(KnowledgeImportTask::getId, id)
-        // 防止定时任务已经把当前task对象的status属性改成SUCCES后，此处将数据删除
-            .eq(KnowledgeImportTask::getTaskStatus, task.getTaskStatus());
+                .eq(KnowledgeImportTask::getTaskStatus, task.getTaskStatus());
 
-        return this.remove(queryWrapper);
+        return this.remove(updateWrapper);
     }
 
-    /**
-     * 批量补充当前页创建人名称，同一用户只查询一次，避免重复查询。
-     */
-    private void fillCreateUserNames(List<KnowledgeImportTask> records) {
-        if (records == null || records.isEmpty()) {
-            return;
+    @Override
+    public void pollProcessingTasks() {
+        log.info("开始轮询查询知识导入任务的当前状态");
+
+        List<KnowledgeImportTask> processingTaskList = this.lambdaQuery()
+                .eq(KnowledgeImportTask::getTaskStatus, KnowledgeImportConstants.TASK_STATUS_PROCESSING)
+                .isNotNull(KnowledgeImportTask::getExternalTaskId)
+                .orderByAsc(KnowledgeImportTask::getUpdateTime)
+                .orderByAsc(KnowledgeImportTask::getId)
+                .last("LIMIT " + kmpConfig.getKnowledgeImportBatchSize())
+                .list();
+
+        for (KnowledgeImportTask processingTask : processingTaskList) {
+            this.processProcessingTask(processingTask);
         }
+    }
+
+    private void processProcessingTask(KnowledgeImportTask processingTask) {
+
+        String externalTaskId = processingTask.getExternalTaskId();
+        String result = restClient.get()
+                .uri("/status/{task_id}", externalTaskId)
+                .retrieve()
+                .body(String.class);
+
+        log.info("result:{}", result);
+    }
+
+    @Override
+    public void cleanInvalidTasks() {
+        log.info("开始清理无用任务");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void fillCreateUserNames(List<KnowledgeImportTask> records) {
+
+//        List<Long> userIds = records.stream().map(KnowledgeImportTask::getCreateUserId).distinct().toList();
+//        userService.listByIds(userIds)
 
         Map<Long, String> userNameMap = new HashMap<>();
-        for (KnowledgeImportTask record : records) {
-            Long createUserId = record.getCreateUserId();
-            if (createUserId == null) {
-                continue;
-            }
-            record.setCreateUserName(userNameMap.computeIfAbsent(createUserId, this::findUserDisplayName));
-        }
-    }
+        for (KnowledgeImportTask task : records) {
+            Long createUserId = task.getCreateUserId();
 
-    /**
-     * 根据用户 ID 获取展示名称。
-     */
-    private String findUserDisplayName(Long userId) {
-        SysUser user = sysUserService.selectUserById(userId);
-        return user == null ? null : user.getNickName();
+            if(!userNameMap.containsKey(createUserId)){
+                SysUser sysUser = sysUserService.selectUserById(createUserId);
+                userNameMap.put(createUserId, sysUser.getUserName());
+            }
+            task.setCreateUserName(userNameMap.get(createUserId));
+        }
     }
 }

@@ -50,10 +50,9 @@ public interface KnowledgeUnitService extends IService<KnowledgeUnit> {
     boolean removeKnowledgeUnit(Long id);
 
     /**
-     * 根据文件内容 SHA-256 摘要校验文件是否已导入（内容重复）。
-     *
-     * @param fileSha256 文件 SHA-256 小写十六进制摘要
-     * @return 内容相同的已导入知识单元；不存在返回 null
+     * 校验fileSha256是否已存在
+     * @param fileSha256
+     * @return
      */
-    KnowledgeUnit findByFileSha256(String fileSha256);
+    KnowledgeUnit findBySha256(String fileSha256);
 }

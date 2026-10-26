@@ -3,6 +3,7 @@ package com.atguigu.kmp.service;
 import com.atguigu.kmp.entity.KnowledgeImportTask;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.IService;
+import jakarta.validation.constraints.Size;
 
 /**
  * <p>
@@ -10,36 +11,42 @@ import com.baomidou.mybatisplus.spring.service.IService;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
 public interface KnowledgeImportTaskService extends IService<KnowledgeImportTask> {
 
-    Page<KnowledgeImportTask> pageKnowledgeImportTasks(Page<KnowledgeImportTask> page, KnowledgeImportTask query);
+    /**
+     * 分页查询任务列表
+     * @param page
+     * @return
+     */
+    Page<KnowledgeImportTask> pageImportTask(Page<KnowledgeImportTask> page);
 
     /**
-     * 初始化知识导入任务。
-     *
-     * @param task 任务入参（至少包含知识组ID和原始文件名）
-     * @param userId 当前用户 ID
-     * @return 新任务 ID
+     * 对上传任务记录进行初始化
+     * @param task
+     * @param userId
+     * @return
      */
     Long initImportTask(KnowledgeImportTask task, Long userId);
 
     /**
-     * 将外部服务返回的任务编号绑定到原平台任务。
-     *
-     * @param id 平台任务 ID
-     * @param externalTaskId 外部任务编号
-     * @param userId 当前用户 ID
-     * @return 绑定后的任务
+     * 将智能体中台的任务id和掌柜智库的task_id进行绑定
+     * @param id
+     * @param externalTaskId
+     * @param userId
+     * @return
      */
-    KnowledgeImportTask bindExternalTask(Long id, String externalTaskId, Long userId);
+    KnowledgeImportTask bindExternalTask(Long id, @Size(max = 128, message = "外部任务编号不能超过128个字符") String externalTaskId, Long userId);
 
     /**
-     * 逻辑移除未绑定的待上传任务或导入失败任务。
-     *
-     * @param id 平台任务 ID
-     * @return 是否移除成功
+     * 移除问题记录（上传未成功）
+     * @param id
      */
     boolean removeImportTask(Long id);
+
+    void pollProcessingTasks();
+
+    void cleanInvalidTasks();
+
 }

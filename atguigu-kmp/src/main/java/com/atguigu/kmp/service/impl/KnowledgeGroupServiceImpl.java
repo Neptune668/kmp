@@ -199,7 +199,14 @@ public class KnowledgeGroupServiceImpl extends ServiceImpl<KnowledgeGroupMapper,
 
         // MP 的逻辑删除不修改审计字段
         // 如果要修改审计字段，则需要自己写一个update操作
-        return this.removeById(id);
+//        return this.removeById(id);
+        return this.lambdaUpdate()
+                .eq(KnowledgeGroup::getId, id)
+                .set(KnowledgeGroup::getIsDeleted, 1)
+                // 手动修改审计字段
+                .set(KnowledgeGroup::getUpdateUserId, userId)
+                .set(KnowledgeGroup::getUpdateTime, LocalDateTime.now())
+                .update();
     }
 
     /** {@inheritDoc} */
