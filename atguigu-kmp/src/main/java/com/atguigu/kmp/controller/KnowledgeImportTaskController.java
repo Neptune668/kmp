@@ -5,18 +5,17 @@ import com.atguigu.kmp.entity.KnowledgeUnit;
 import com.atguigu.kmp.service.KnowledgeImportTaskService;
 import com.atguigu.kmp.service.KnowledgeUnitService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.PageDomain;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.page.TableSupport;
+import com.ruoyi.common.enums.BusinessType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,5 +79,19 @@ public class KnowledgeImportTaskController extends BaseController {
             result.put("knowledgeUnitName", duplicateUnit.getKnowledgeUnitName());
         }
         return AjaxResult.success(result);
+    }
+
+    /**
+     * 在文件对外上传前初始化平台任务。
+     *
+     * @param task 文件名和知识组 ID
+     * @return 平台任务 ID
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeImport:import')")
+    @Log(title = "知识导入", businessType = BusinessType.IMPORT)
+    @PostMapping("/init")
+    public AjaxResult init(@RequestBody KnowledgeImportTask task) {
+        Long taskId = knowledgeImportTaskService.initImportTask(task, this.getUserId());
+        return AjaxResult.success("初始化知识导入任务成功", taskId);
     }
 }

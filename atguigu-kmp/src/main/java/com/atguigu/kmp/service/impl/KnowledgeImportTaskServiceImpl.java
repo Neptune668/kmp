@@ -1,5 +1,6 @@
 package com.atguigu.kmp.service.impl;
 
+import com.atguigu.kmp.constant.KnowledgeImportConstants;
 import com.atguigu.kmp.entity.KnowledgeImportTask;
 import com.atguigu.kmp.mapper.KnowledgeImportTaskMapper;
 import com.atguigu.kmp.service.KnowledgeImportTaskService;
@@ -13,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +63,43 @@ public class KnowledgeImportTaskServiceImpl extends ServiceImpl<KnowledgeImportT
         return result;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Long initImportTask(KnowledgeImportTask task, Long userId)
+    {
+        log.info("开始初始化知识导入任务");
+
+        // 初始化接口只接受文件名和知识组，其余字段全部由平台重置，防止客户端越权赋值。
+        // 这样做是在划安全边界：调用方可以说明“文件叫什么、放进哪个组”，但不能伪造任务 ID、处理状态、创建人和完成时间。
+        LocalDateTime now = LocalDateTime.now();
+        task.setId(null);
+        task.setKnowledgeUnitId(null);
+        task.setExternalTaskId(null);
+        task.setTaskStatus(KnowledgeImportConstants.TASK_STATUS_PENDING);
+        task.setTaskInfo(null);
+        task.setFailureReason(null);
+        task.setFinishTime(null);
+        task.setDurationMs(null);
+        task.setCreateUserId(userId);
+        task.setCreateTime(now);
+        task.setUpdateUserId(null);
+        task.setUpdateTime(null);
+        task.setIsDeleted(0);
+        task.setCreateUserName(null);
+        this.save(task);
+        return task.getId();
+
+//        KnowledgeImportTask knowledgeImportTask = new KnowledgeImportTask();
+//        knowledgeImportTask.setFileName(task.getFileName());
+//        knowledgeImportTask.setKnowledgeGroupId(task.getKnowledgeGroupId());
+//        knowledgeImportTask.setTaskStatus(KnowledgeImportConstants.TASK_STATUS_PENDING);
+//        knowledgeImportTask.setCreateUserId(userId);
+//        knowledgeImportTask.setCreateTime(now);
+//        knowledgeImportTask.setIsDeleted(0);
+//        this.save(knowledgeImportTask);
+//        return knowledgeImportTask.getId();
+    }
+
     /** 批量补充当前页创建人名称，同一用户只查询一次，避免重复查询。 */
     private void fillCreateUserNames(List<KnowledgeImportTask> records)
     {
@@ -87,6 +126,4 @@ public class KnowledgeImportTaskServiceImpl extends ServiceImpl<KnowledgeImportT
         SysUser user = sysUserService.selectUserById(userId);
         return user == null ? null : user.getNickName();
     }
-
-
 }
