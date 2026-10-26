@@ -31,8 +31,8 @@ public class KmpConfig {
     @Value("${kmp.knowledge-import.batch-size:100}")
     private int knowledgeImportBatchSize;
 
-    @Value("${kmp.knowledge-import.pending-expire-minutes:30}")
-    private long knowledgeImportPendingExpireMinutes;
+    @Value("${kmp.knowledge-import.expire-minutes:30}")
+    private long knowledgeImportExpireMinutes;
 
 
     @Value("${kmp.knowledge-system.base-url}")
@@ -64,7 +64,7 @@ public class KmpConfig {
                 .build();
     }
 
-    @Bean("AbcRestClient")
+    @Bean("abcRestClient")
     public RestClient AbcRestClient()
     {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();

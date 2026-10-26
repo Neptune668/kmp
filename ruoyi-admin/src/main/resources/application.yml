@@ -173,12 +173,12 @@ xss:
 # 知识导入后台轮询配置
 kmp:
   # MinIO 对外可读端点，下载时与数据库中的对象路径拼接
-  minio-public-endpoint: http://localhost:9000
+  minio-public-endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
 
   knowledge-import:
     poll-interval-ms: 5000
     batch-size: 100
-    pending-expire-minutes: 30
+    expire-minutes: 30
 
   knowledge-system:
     # 外部切片服务地址由部署环境提供，留空时不影响列表和基础信息编辑
