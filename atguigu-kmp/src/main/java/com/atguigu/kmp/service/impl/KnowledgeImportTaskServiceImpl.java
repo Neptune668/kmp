@@ -64,10 +64,11 @@ public class KnowledgeImportTaskServiceImpl extends ServiceImpl<KnowledgeImportT
         return result;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Long initImportTask(KnowledgeImportTask task, Long userId)
-    {
+    public Long initImportTask(KnowledgeImportTask task, Long userId) {
         log.info("开始初始化知识导入任务");
 
         // 初始化接口只接受文件名和知识组，其余字段全部由平台重置，防止客户端越权赋值。
@@ -101,10 +102,11 @@ public class KnowledgeImportTaskServiceImpl extends ServiceImpl<KnowledgeImportT
 //        return knowledgeImportTask.getId();
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public KnowledgeImportTask bindExternalTask(Long id, String externalTaskId, Long userId)
-    {
+    public KnowledgeImportTask bindExternalTask(Long id, String externalTaskId, Long userId) {
         log.info("开始绑定外部知识导入任务，taskId={}，externalTaskId={}", id, externalTaskId);
 
         LocalDateTime now = LocalDateTime.now();
@@ -117,35 +119,59 @@ public class KnowledgeImportTaskServiceImpl extends ServiceImpl<KnowledgeImportT
                 .set(KnowledgeImportTask::getUpdateUserId, userId)
                 .set(KnowledgeImportTask::getUpdateTime, now)
                 .update();
-        if (!updated)
-        {
+        if (!updated) {
             throw new ServiceException("当前状态不允许绑定外部任务");
         }
         return this.getById(id);
     }
-    /** 批量补充当前页创建人名称，同一用户只查询一次，避免重复查询。 */
-    private void fillCreateUserNames(List<KnowledgeImportTask> records)
-    {
-        if (records == null || records.isEmpty())
-        {
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean removeImportTask(Long id) {
+        log.info("开始移除知识导入任务");
+        KnowledgeImportTask task = this.getById(id);
+
+        boolean pendingAndUnbound = KnowledgeImportConstants.TASK_STATUS_PENDING.equals(task.getTaskStatus())
+                && task.getExternalTaskId() == null;
+        boolean failed = KnowledgeImportConstants.TASK_STATUS_FAILED.equals(task.getTaskStatus());
+        if (!pendingAndUnbound && !failed) {
+            throw new ServiceException("当前状态不允许移除");
+        }
+
+
+        LambdaQueryWrapper<KnowledgeImportTask> queryWrapper = new LambdaQueryWrapper<KnowledgeImportTask>()
+                .eq(KnowledgeImportTask::getId, id)
+        // 防止定时任务已经把当前task对象的status属性改成SUCCES后，此处将数据删除
+            .eq(KnowledgeImportTask::getTaskStatus, task.getTaskStatus());
+
+        return this.remove(queryWrapper);
+    }
+
+    /**
+     * 批量补充当前页创建人名称，同一用户只查询一次，避免重复查询。
+     */
+    private void fillCreateUserNames(List<KnowledgeImportTask> records) {
+        if (records == null || records.isEmpty()) {
             return;
         }
 
         Map<Long, String> userNameMap = new HashMap<>();
-        for (KnowledgeImportTask record : records)
-        {
+        for (KnowledgeImportTask record : records) {
             Long createUserId = record.getCreateUserId();
-            if (createUserId == null)
-            {
+            if (createUserId == null) {
                 continue;
             }
             record.setCreateUserName(userNameMap.computeIfAbsent(createUserId, this::findUserDisplayName));
         }
     }
 
-    /** 根据用户 ID 获取展示名称。 */
-    private String findUserDisplayName(Long userId)
-    {
+    /**
+     * 根据用户 ID 获取展示名称。
+     */
+    private String findUserDisplayName(Long userId) {
         SysUser user = sysUserService.selectUserById(userId);
         return user == null ? null : user.getNickName();
     }

@@ -114,4 +114,18 @@ public class KnowledgeImportTaskController extends BaseController {
         );
         return AjaxResult.success("绑定外部导入任务成功", boundTask);
     }
+    /**
+     * 逻辑移除未绑定待上传任务或导入失败任务。
+     *
+     * @param id 平台任务 ID
+     * @return 移除结果
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeImport:remove')")
+    @Log(title = "知识导入", businessType = BusinessType.DELETE)
+    @DeleteMapping("/{id}")
+    public AjaxResult remove(@PathVariable Long id)
+    {
+        knowledgeImportTaskService.removeImportTask(id);
+        return AjaxResult.success("移除知识导入任务成功");
+    }
 }

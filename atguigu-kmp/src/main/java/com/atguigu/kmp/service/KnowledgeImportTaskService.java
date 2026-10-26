@@ -34,4 +34,12 @@ public interface KnowledgeImportTaskService extends IService<KnowledgeImportTask
      * @return 绑定后的任务
      */
     KnowledgeImportTask bindExternalTask(Long id, String externalTaskId, Long userId);
+
+    /**
+     * 逻辑移除未绑定的待上传任务或导入失败任务。
+     *
+     * @param id 平台任务 ID
+     * @return 是否移除成功
+     */
+    boolean removeImportTask(Long id);
 }
