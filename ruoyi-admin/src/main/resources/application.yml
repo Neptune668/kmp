@@ -224,6 +224,8 @@ kmp:
   qwen:
     api-key: ${DASHSCOPE_API_KEY}
     base-url: ${DASHSCOPE_API_BASE_URL:https://dashscope.aliyuncs.com}
+    connect-timeout: 3s
+    read-timeout: 10s
 #    embedding-model: text-embedding-v4
     embedding-model: qwen3.7-text-embedding-flash
     embedding-dimension: 1024
