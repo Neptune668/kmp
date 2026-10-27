@@ -47,6 +47,6 @@ public interface KnowledgeImportTaskService extends IService<KnowledgeImportTask
 
     void pollProcessingTasks();
 
-    void cleanInvalidTasks();
+    boolean cleanInvalidTasks();
 
 }
