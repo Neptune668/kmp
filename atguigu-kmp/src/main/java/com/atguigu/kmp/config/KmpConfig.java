@@ -45,6 +45,16 @@ public class KmpConfig {
     private Duration knowledgeSystemReadTimeout;
 
 
+    @Value("${kmp.qwen.base-url}")
+    private String qwenBaseUrl;
+
+    @Value("${kmp.qwen.connect-timeout}")
+    private Duration qwenConnectTimeout;
+
+    @Value("${kmp.qwen.read-timeout}")
+    private Duration qwenReadTimeout;
+
+
     /**
      * RestClient客户端：调用知识库接口
      *
@@ -64,17 +74,17 @@ public class KmpConfig {
                 .build();
     }
 
-    @Bean("abcRestClient")
-    public RestClient AbcRestClient()
+    @Bean("qwenRestClient")
+    public RestClient qwenRestClient()
     {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(knowledgeSystemConnectTimeout);
-        requestFactory.setReadTimeout(knowledgeSystemReadTimeout);
+        requestFactory.setConnectTimeout(qwenConnectTimeout);
+        requestFactory.setReadTimeout(qwenReadTimeout);
 
         return RestClient
                 .builder()
                 .requestFactory(requestFactory)
-                .baseUrl(knowledgeSystemBaseUrl)
+                .baseUrl(qwenBaseUrl)
                 .build();
     }
 
