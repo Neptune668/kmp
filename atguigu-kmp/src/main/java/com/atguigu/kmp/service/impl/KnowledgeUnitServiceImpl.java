@@ -2,7 +2,12 @@ package com.atguigu.kmp.service.impl;
 
 import com.atguigu.kmp.config.KmpConfig;
 import com.atguigu.kmp.constant.KnowledgeUnitConstants;
+import com.atguigu.kmp.dto.DeleteDocumentChunksResponse;
+import com.atguigu.kmp.dto.ExternalKnowledgeTaskStatus;
+import com.atguigu.kmp.dto.KnowledgeChunk;
+import com.atguigu.kmp.dto.KnowledgeChunkPageResponse;
 import com.atguigu.kmp.entity.KnowledgeGroup;
+import com.atguigu.kmp.entity.KnowledgeImportTask;
 import com.atguigu.kmp.entity.KnowledgeUnit;
 import com.atguigu.kmp.mapper.KnowledgeUnitMapper;
 import com.atguigu.kmp.service.KnowledgeGroupService;
@@ -17,8 +22,11 @@ import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -46,6 +54,12 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
 
     @Autowired
     private ISysUserService sysUserService;
+
+
+    @Autowired
+    @Qualifier("knowledgeSystemRestClient")
+    private RestClient restClient;
+
     /** {@inheritDoc} */
     @Override
     public IPage<KnowledgeUnit> pageKnowledgeUnits(Page<KnowledgeUnit> page, KnowledgeUnit query)
@@ -192,7 +206,19 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
     {
         log.info("开始逻辑删除知识单元，knowledgeUnitId={}", id);
 
-        // TODO 删除知识单元下的全部切片信息
+        //删除知识单元下的全部切片信息
+        KnowledgeUnit knowledgeUnit = this.getById(id);
+        String documentId = knowledgeUnit.getDocumentId();
+
+        DeleteDocumentChunksResponse result = restClient
+                .delete()
+                .uri("/knowledge-units/{documentId}/chunks", documentId)
+                .retrieve()
+                .body(DeleteDocumentChunksResponse.class);
+
+        log.info("删除知识单元下的全部切片信息，document_id={}, deleted_count={}", result.getDocumentId(), result.getDeletedCount());
+
+        // 删除知识单元
         return this.removeById(id);
     }
 
@@ -217,4 +243,27 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
                 .last("LIMIT 1")
                 .one();
     }
-}
+
+    @Override
+    public Long createFromCompletedImport(KnowledgeImportTask processingTask, ExternalKnowledgeTaskStatus externalStatus) {
+
+        ExternalKnowledgeTaskStatus.Result result = externalStatus.getResult();
+
+        KnowledgeUnit knowledgeUnit = new KnowledgeUnit();
+        knowledgeUnit.setDocumentId(result.getDocumentId());
+        knowledgeUnit.setKnowledgeGroupId(processingTask.getKnowledgeGroupId());
+        knowledgeUnit.setKnowledgeUnitName(result.getItemName());
+        knowledgeUnit.setOriginalFileName(processingTask.getFileName());
+        knowledgeUnit.setFileSha256(result.getFileSha256());
+        knowledgeUnit.setOriginalFileDownloadUrl(result.getOriginalFileDownloadUrl());
+        knowledgeUnit.setChunkCount(result.getChunkCount());
+        knowledgeUnit.setTotalTextLength(result.getTotalTextLength());
+        knowledgeUnit.setCreateUserId(processingTask.getCreateUserId());
+        knowledgeUnit.setCreateTime(LocalDateTime.now());
+        knowledgeUnit.setIsDeleted(0);
+
+        this.save(knowledgeUnit);
+        return knowledgeUnit.getId();
+    }
+
+
