@@ -222,10 +222,12 @@ kmp:
     medium-score: 0.65
     pending-count: 5
   qwen:
-    api-key: ${DASHSCOPE_API_KEY:xxx}
+    api-key: ${DASHSCOPE_API_KEY}
     base-url: ${DASHSCOPE_API_BASE_URL:https://dashscope.aliyuncs.com}
-    embedding-model: text-embedding-v4
+#    embedding-model: text-embedding-v4
+    embedding-model: qwen3.7-text-embedding-flash
     embedding-dimension: 1024
     embedding-path: /api/v1/services/embeddings/text-embedding/text-embedding
-    reranker-model: qwen3-rerank
+    reranker-model: qwen3.7-text-rerank
+#    reranker-model: qwen3-rerank
     reranker-path: /api/v1/services/rerank/text-rerank/text-rerank
