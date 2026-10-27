@@ -20,24 +20,11 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
 @Slf4j
 @Service
 public class KnowledgeQuerySessionServiceImpl extends ServiceImpl<KnowledgeQuerySessionMapper, KnowledgeQuerySession> implements KnowledgeQuerySessionService {
-
-    @Override
-    public Long saveKnowledgeGroup(KnowledgeQuerySession knowledgeQuerySession, Long userId) {
-//        knowledgeQuerySession.setId();
-        knowledgeQuerySession.setCreateUserId(userId);
-        knowledgeQuerySession.setCreateTime(LocalDateTime.now());
-        knowledgeQuerySession.setUpdateUserId(null);
-        knowledgeQuerySession.setUpdateTime(null);
-        knowledgeQuerySession.setIsDeleted(0);
-        this.save(knowledgeQuerySession);
-        return knowledgeQuerySession.getId();
-    }
-
 
     @Override
     public IPage<KnowledgeQuerySession> pageSessions(
@@ -59,6 +46,28 @@ public class KnowledgeQuerySessionServiceImpl extends ServiceImpl<KnowledgeQuery
     /** {@inheritDoc} */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public Long createSession(KnowledgeQuerySession session, Long userId)
+    {
+        String sessionTitle = session.getSessionTitle();
+        log.info("开始创建知识查询会话", userId, sessionTitle);
+
+        // 所有主键和审计字段均以登录上下文及服务端时间为准。
+        session.setId(null);
+        session.setSessionTitle(sessionTitle);
+        session.setCreateUserId(userId);
+        session.setCreateTime(LocalDateTime.now());
+        session.setUpdateUserId(null);
+        session.setUpdateTime(null);
+        session.setIsDeleted(0);
+        this.save(session);
+
+        return session.getId();
+    }
+
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean removeSession(Long id, Long userId)
     {
         log.info("开始删除知识查询会话，userId={}，sessionId={}", userId, id);
@@ -75,5 +84,31 @@ public class KnowledgeQuerySessionServiceImpl extends ServiceImpl<KnowledgeQuery
                         .set(KnowledgeQuerySession::getUpdateUserId, userId)
                         .set(KnowledgeQuerySession::getUpdateTime, now);
         return update(updateWrapper);
+
+        //不会记录审计字段
+//        LambdaQueryWrapper<KnowledgeQuerySession> queryWrapper = new LambdaQueryWrapper<KnowledgeQuerySession>()
+//                        .eq(KnowledgeQuerySession::getId, id).eq(KnowledgeQuerySession::getCreateUserId, userId);
+//        return remove(queryWrapper);
     }
+
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean clearSessions(Long userId)
+    {
+        log.info("开始清理知识查询会话，userId={}", userId);
+        LocalDateTime now = LocalDateTime.now();
+
+        // 只清理当前用户的有效索引，并同步维护审计字段。
+        LambdaUpdateWrapper<KnowledgeQuerySession> wrapper =
+                new LambdaUpdateWrapper<KnowledgeQuerySession>()
+                        .eq(KnowledgeQuerySession::getCreateUserId, userId)
+                        .eq(KnowledgeQuerySession::getIsDeleted, 0)
+                        .set(KnowledgeQuerySession::getIsDeleted, 1)
+                        .set(KnowledgeQuerySession::getUpdateUserId, userId)
+                        .set(KnowledgeQuerySession::getUpdateTime, now);
+        return update(wrapper);
+    }
+
 }

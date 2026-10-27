@@ -11,11 +11,9 @@ import com.baomidou.mybatisplus.spring.service.IService;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
 public interface KnowledgeQuerySessionService extends IService<KnowledgeQuerySession> {
-
-    Long saveKnowledgeGroup(KnowledgeQuerySession knowledgeQuerySession, Long userId);
 
     /**
      * 分页查询当前用户的未删除会话。
@@ -28,6 +26,16 @@ public interface KnowledgeQuerySessionService extends IService<KnowledgeQuerySes
     IPage<KnowledgeQuerySession> pageSessions(Page<KnowledgeQuerySession> page, String sessionTitle, Long userId);
 
     /**
+     * 创建当前用户的知识查询会话。
+     *
+     * @param session 待创建会话
+     * @param userId 当前登录用户 ID
+     * @return 数据库生成的会话 ID
+     */
+    Long createSession(KnowledgeQuerySession session, Long userId);
+
+
+    /**
      * 逻辑删除当前用户的指定会话。
      *
      * @param id 会话 ID
@@ -35,4 +43,13 @@ public interface KnowledgeQuerySessionService extends IService<KnowledgeQuerySes
      * @return 是否删除成功
      */
     boolean removeSession(Long id, Long userId);
+
+
+    /**
+     * 逻辑清理当前用户的全部会话。
+     *
+     * @param userId 当前登录用户 ID
+     * @return 是否清理到历史会话
+     */
+    boolean clearSessions(Long userId);
 }
