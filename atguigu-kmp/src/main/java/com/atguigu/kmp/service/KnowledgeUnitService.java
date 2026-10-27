@@ -1,5 +1,9 @@
 package com.atguigu.kmp.service;
 
+import com.atguigu.kmp.dto.ExternalKnowledgeTaskStatus;
+import com.atguigu.kmp.dto.KnowledgeChunk;
+import com.atguigu.kmp.dto.KnowledgeChunkPageResponse;
+import com.atguigu.kmp.entity.KnowledgeImportTask;
 import com.atguigu.kmp.entity.KnowledgeUnit;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -55,4 +59,21 @@ public interface KnowledgeUnitService extends IService<KnowledgeUnit> {
      * @return
      */
     KnowledgeUnit findBySha256(String fileSha256);
+
+    Long createFromCompletedImport(KnowledgeImportTask processingTask, ExternalKnowledgeTaskStatus externalStatus);
+
+
+    /**
+     * 根据知识单元id查询分片信息
+     * @param id
+     * @param pageNum
+     * @param pageSize
+     * @param userId
+     * @return
+     */
+    KnowledgeChunkPageResponse pageChunks(Long id, Long pageNum, Long pageSize, Long userId);
+
+    KnowledgeChunk saveChunk(Long id, String chunkId, KnowledgeChunk chunk, Long userId);
+
+    KnowledgeChunk removeChunk(Long id, String chunkId, Long userId);
 }

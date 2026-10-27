@@ -266,4 +266,96 @@ public class KnowledgeUnitServiceImpl extends ServiceImpl<KnowledgeUnitMapper, K
         return knowledgeUnit.getId();
     }
 
+    @Override
+    public KnowledgeChunkPageResponse pageChunks(Long id, Long pageNum, Long pageSize, Long userId) {
 
+        String documentId = this.getById(id).getDocumentId();
+        KnowledgeChunkPageResponse result = restClient
+                .get()
+                .uri(uriBuilder -> uriBuilder.path("/knowledge-units/{documentId}/chunks")
+                        .queryParam("page_num", pageNum)
+                        .queryParam("page_size", pageSize)
+                        .build(documentId))
+                .retrieve()
+                .body(KnowledgeChunkPageResponse.class);
+
+        //同步统计数据
+        this.updateStatistics(id, result.getChunkCount(), result.getTotalTextLength(), userId);
+
+
+        return result;
+    }
+
+    @Override
+    public KnowledgeChunk saveChunk(Long id, String chunkId, KnowledgeChunk chunk, Long userId) {
+
+        KnowledgeUnit knowledgeUnit = this.getById(id);
+        String documentId = knowledgeUnit.getDocumentId();
+
+        KnowledgeChunk result = null;
+        if(chunkId == null){
+            result = restClient.post().uri("/knowledge-units/{documentId}/chunks", documentId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(buildChunkRequest(chunk))
+                    .retrieve()
+                    .body(KnowledgeChunk.class);
+        }else{
+            result = restClient.put().uri("/knowledge-units/{documentId}/chunks/{chunkId}", documentId, chunkId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(buildChunkRequest(chunk))
+                    .retrieve()
+                    .body(KnowledgeChunk.class);
+        }
+
+        //同步统计数据
+        this.updateStatistics(id, result.getChunkCount(), result.getTotalTextLength(), userId);
+
+        return result;
+    }
+
+    @Override
+    public KnowledgeChunk removeChunk(Long id, String chunkId, Long userId) {
+
+        KnowledgeUnit knowledgeUnit = this.getById(id);
+        String documentId = knowledgeUnit.getDocumentId();
+
+        KnowledgeChunk result = restClient
+                .delete()
+                .uri(uriBuilder -> uriBuilder.path("/knowledge-units/{documentId}/chunks/{chunkId}")
+                        .build(documentId, chunkId))
+                .retrieve()
+                .body(KnowledgeChunk.class);
+
+        //同步统计数据
+        this.updateStatistics(id, result.getChunkCount(), result.getTotalTextLength(), userId);
+
+        return result;
+    }
+
+    private Map<String, Object> buildChunkRequest(KnowledgeChunk chunk) {
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("chunk_order", chunk.getChunkOrder());
+        request.put("title", chunk.getTitle());
+        request.put("parent_title", chunk.getParentTitle());
+        request.put("content", chunk.getContent());
+        return request;
+    }
+
+    /**
+     * 更新统计数据
+     * @param id
+     * @param chunkCount
+     * @param totalTextLength
+     * @param userId
+     */
+    private void updateStatistics(Long id, Long chunkCount, Long totalTextLength, Long userId) {
+        this.lambdaUpdate()
+                .eq(KnowledgeUnit::getId, id)
+                .set(KnowledgeUnit::getChunkCount, chunkCount)
+                .set(KnowledgeUnit::getTotalTextLength, totalTextLength)
+                .set(KnowledgeUnit::getUpdateUserId, userId)
+                .set(KnowledgeUnit::getUpdateTime, LocalDateTime.now())
+                .update();
+    }
+}

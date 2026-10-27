@@ -1,5 +1,7 @@
 package com.atguigu.kmp.controller;
 
+import com.atguigu.kmp.dto.KnowledgeChunk;
+import com.atguigu.kmp.dto.KnowledgeChunkPageResponse;
 import com.atguigu.kmp.entity.KnowledgeUnit;
 import com.atguigu.kmp.service.KnowledgeUnitService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -107,5 +109,69 @@ public class KnowledgeUnitController extends BaseController {
     {
         knowledgeUnitService.removeKnowledgeUnit(id);
         return AjaxResult.success("删除知识单元成功");
+    }
+
+    /**
+     * 分页查询外部切片。
+     *
+     * @param id 知识单元 ID
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 切片和权威统计
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeUnit:query')")
+    @GetMapping("/{id}/chunks")
+    public AjaxResult listChunks(@PathVariable Long id,
+                                 @RequestParam(defaultValue = "1") Long pageNum,
+                                 @RequestParam(defaultValue = "10") Long pageSize)
+    {
+        KnowledgeChunkPageResponse result = knowledgeUnitService.pageChunks(id, pageNum, pageSize, this.getUserId());
+        return AjaxResult.success(result);
+    }
+
+    /**
+     * 新增单个外部切片。
+     *
+     * @param id 知识单元 ID
+     * @param chunk 切片内容
+     * @return 新切片及权威统计
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeUnit:add')")
+    @Log(title = "知识单元切片", businessType = BusinessType.INSERT)
+    @PostMapping("/{id}/chunks")
+    public AjaxResult addChunk(@PathVariable Long id, @RequestBody KnowledgeChunk chunk)
+    {
+        return AjaxResult.success("新增切片成功", knowledgeUnitService.saveChunk(id, null, chunk, this.getUserId()));
+    }
+
+    /**
+     * 完整替换单个外部切片的顺序和内容。
+     *
+     * @param id 知识单元 ID
+     * @param chunkId 切片字符串 ID
+     * @param chunk 切片内容
+     * @return 修改后切片及权威统计
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeUnit:edit')")
+    @Log(title = "知识单元切片", businessType = BusinessType.UPDATE)
+    @PutMapping("/{id}/chunks/{chunkId}")
+    public AjaxResult editChunk(@PathVariable Long id, @PathVariable String chunkId, @RequestBody KnowledgeChunk chunk)
+    {
+        return AjaxResult.success("修改切片成功", knowledgeUnitService.saveChunk(id, chunkId, chunk, this.getUserId()));
+    }
+
+    /**
+     * 删除单个外部切片。
+     *
+     * @param id 知识单元 ID
+     * @param chunkId 切片字符串 ID
+     * @return 删除后权威统计
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeUnit:remove')")
+    @Log(title = "知识单元切片", businessType = BusinessType.DELETE)
+    @DeleteMapping("/{id}/chunks/{chunkId}")
+    public AjaxResult removeChunk(@PathVariable Long id, @PathVariable String chunkId)
+    {
+        return AjaxResult.success("删除切片成功", knowledgeUnitService.removeChunk(id, chunkId, this.getUserId()));
     }
 }
