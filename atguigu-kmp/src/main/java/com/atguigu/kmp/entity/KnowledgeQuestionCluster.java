@@ -1,5 +1,7 @@
 package com.atguigu.kmp.entity;
 
+import com.atguigu.kmp.dto.KnowledgeRecentQuestion;
+import com.atguigu.kmp.typehandler.KnowledgeRecentQuestionListTypeHandler;
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,6 +11,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -95,9 +98,9 @@ public class KnowledgeQuestionCluster implements Serializable {
     /**
      * 最近关联问题集合，按关联时间倒序仅保留最新十条
      */
-//    @TableField(typeHandler = KnowledgeRecentQuestionListTypeHandler.class)
-//    private List<KnowledgeRecentQuestion> recentQuestions;
-    private String recentQuestions;
+    @TableField(typeHandler = KnowledgeRecentQuestionListTypeHandler.class)
+    private List<KnowledgeRecentQuestion> recentQuestions;
+//    private String recentQuestions;
 
 
     /**
