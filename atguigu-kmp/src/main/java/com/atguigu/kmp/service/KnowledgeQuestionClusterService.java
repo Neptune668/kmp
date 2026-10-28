@@ -1,7 +1,11 @@
 package com.atguigu.kmp.service;
 
 import com.atguigu.kmp.entity.KnowledgeQuestionCluster;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.IService;
+
+import java.util.Map;
 
 /**
  * <p>
@@ -9,8 +13,19 @@ import com.baomidou.mybatisplus.spring.service.IService;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
 public interface KnowledgeQuestionClusterService extends IService<KnowledgeQuestionCluster> {
 
+    /** 分页查询问题簇。 */
+    IPage<KnowledgeQuestionCluster> pageQuestionClusters(Page<KnowledgeQuestionCluster> page, KnowledgeQuestionCluster query);
+
+    KnowledgeQuestionCluster getQuestionClusterDetail(Long id);
+
+    /** 删除未发布问题簇。 */
+    void removeQuestionCluster(Long id, Long userId);
+
+    Map<String, Object> createQuestionCluster(KnowledgeQuestionCluster cluster, Long userId);
+
+    void updateQuestionCluster(KnowledgeQuestionCluster cluster, Long userId);
 }

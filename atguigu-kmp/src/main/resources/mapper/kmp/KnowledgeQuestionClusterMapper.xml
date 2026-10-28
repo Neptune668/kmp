@@ -2,4 +2,47 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.atguigu.kmp.mapper.KnowledgeQuestionClusterMapper">
 
+    <resultMap id="KnowledgeQuestionClusterResult" type="com.atguigu.kmp.entity.KnowledgeQuestionCluster" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="recentQuestions"
+                column="recent_questions"
+                typeHandler="com.atguigu.kmp.typehandler.KnowledgeRecentQuestionListTypeHandler"/>
+    </resultMap>
+
+
+    <select id="selectQuestionClusterPage" resultMap="KnowledgeQuestionClusterResult">
+        SELECT
+        qcc.id,
+        qcc.standard_question,
+        qcc.standard_answer,
+        qcc.knowledge_unit_id,
+        qcc.knowledge_group_id,
+        qcc.status,
+        qcc.association_count,
+        qcc.faq_click_count,
+        qcc.exposure_count,
+        qcc.helpful_count,
+        qcc.unhelpful_count,
+        qcc.refusal_count,
+        qcc.recent_questions,
+        qcc.create_user_id,
+        qcc.create_time,
+        qcc.update_user_id,
+        qcc.update_time,
+        qcc.is_deleted,
+        ku.knowledge_unit_name AS knowledge_unit_name
+        FROM kmp_knowledge_question_cluster qcc
+        LEFT JOIN kmp_knowledge_unit ku ON ku.id = qcc.knowledge_unit_id AND ku.is_deleted = 0
+        WHERE qcc.is_deleted = 0
+        <if test="query.standardQuestion != null and query.standardQuestion != ''">
+            AND qcc.standard_question LIKE CONCAT('%', #{query.standardQuestion}, '%')
+        </if>
+        <if test="query.knowledgeUnitName != null and query.knowledgeUnitName != ''">
+            AND ku.knowledge_unit_name LIKE CONCAT('%', #{query.knowledgeUnitName}, '%')
+        </if>
+        <if test="query.status != null">
+            AND qcc.status = #{query.status}
+        </if>
+        ORDER BY qcc.update_time DESC, qcc.id DESC
+    </select>
 </mapper>
