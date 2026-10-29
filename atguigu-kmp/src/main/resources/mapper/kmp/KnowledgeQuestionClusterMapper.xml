@@ -45,4 +45,29 @@
         </if>
         ORDER BY qcc.update_time DESC, qcc.id DESC
     </select>
+
+    <select id="selectRecommendedFaqs" resultType="com.atguigu.kmp.entity.KnowledgeQuestionCluster">
+        SELECT qc.id,
+               qc.standard_question,
+               ROUND(100 * (
+                   0.35 * LEAST(COALESCE(qc.association_count, 0) / 20.0, 1)
+                       + 0.20 * LEAST(COALESCE(qc.faq_click_count, 0) / 10.0, 1)
+                       + 0.25 * LEAST((COALESCE(qc.faq_click_count, 0) + 1) / (COALESCE(qc.exposure_count, 0) + 5.0), 1)
+                       + 0.20 * ((COALESCE(qc.helpful_count, 0) + 1) / (COALESCE(qc.helpful_count, 0) + COALESCE(qc.unhelpful_count, 0) + 2.0))
+                   ), 2) AS hot_score
+
+        FROM kmp_knowledge_question_cluster qc
+                 INNER JOIN kmp_knowledge_unit ku
+                            ON ku.id = qc.knowledge_unit_id
+                                AND ku.is_deleted = 0
+        WHERE qc.is_deleted = 0
+          AND qc.status = 2
+          AND ku.knowledge_unit_name = #{itemName}
+        ORDER BY hot_score DESC,
+                 qc.association_count DESC,
+                 qc.faq_click_count DESC,
+                 qc.id DESC
+
+            LIMIT #{limit}
+    </select>
 </mapper>

@@ -1,10 +1,12 @@
 package com.atguigu.kmp.service;
 
+import com.atguigu.kmp.dto.KnowledgeFaqModels;
 import com.atguigu.kmp.entity.KnowledgeQuestionCluster;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.IService;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,4 +36,10 @@ public interface KnowledgeQuestionClusterService extends IService<KnowledgeQuest
 
     /** 取消发布已发布问题簇。 */
     void unpublishQuestionCluster(Long id, Long userId);
+
+    /** 查询当前知识单元的热门 FAQ。 */
+    List<KnowledgeFaqModels.KnowledgeFaqItem> listRecommendedFaqs(String itemName);
+
+    /** 根据输入内容查询 FAQ 联想。 */
+    List<KnowledgeFaqModels.KnowledgeFaqItem> listSuggestedFaqs(String keyword);
 }

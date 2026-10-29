@@ -1,5 +1,6 @@
 package com.atguigu.kmp.controller;
 
+import com.atguigu.kmp.dto.KnowledgeFaqModels;
 import com.atguigu.kmp.entity.KnowledgeQuestionCluster;
 import com.atguigu.kmp.service.KnowledgeQuestionClusterService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -16,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -143,5 +145,33 @@ public class KnowledgeQuestionClusterController extends BaseController {
     {
         knowledgeQuestionClusterService.unpublishQuestionCluster(id, getUserId());
         return AjaxResult.success();
+    }
+
+    /**
+     * GET /kmp/questionCluster/faq/recommendations：查询当前知识单元的热门 FAQ。
+     *
+     * @param itemName 外部知识库识别的知识单元名称
+     * @return FAQ 列表（不包含答案）
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeQuery:query')")
+    @GetMapping("/faq/recommendations")
+    public AjaxResult recommendFaqs(@RequestParam(required = false) String itemName)
+    {
+        List<KnowledgeFaqModels.KnowledgeFaqItem> faqItems = knowledgeQuestionClusterService.listRecommendedFaqs(itemName);
+        return AjaxResult.success(faqItems);
+    }
+
+    /**
+     * GET /kmp/questionCluster/faq/suggestions：查询 FAQ 输入联想。
+     *
+     * @param keyword 用户当前输入内容
+     * @return 不包含答案的 FAQ 列表
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeQuery:query')")
+    @GetMapping("/faq/suggestions")
+    public AjaxResult suggestFaqs(@RequestParam(required = false) String keyword)
+    {
+        List<KnowledgeFaqModels.KnowledgeFaqItem> faqItems = knowledgeQuestionClusterService.listSuggestedFaqs(keyword);
+        return AjaxResult.success(faqItems);
     }
 }
