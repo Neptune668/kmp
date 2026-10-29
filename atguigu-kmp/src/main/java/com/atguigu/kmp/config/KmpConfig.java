@@ -69,6 +69,9 @@ public class KmpConfig {
     /** FAQ Elasticsearch HTTP 读取超时。 */
     @Value("${kmp.faq-search.read-timeout}")
     private Duration faqSearchReadTimeout;
+
+
+
     /**
      * RestClient客户端：调用知识库接口
      *
@@ -102,12 +105,6 @@ public class KmpConfig {
                 .build();
     }
 
-
-    /**
-     * 创建 FAQ Elasticsearch 客户端。
-     *
-     * @return FAQ 搜索 RestClient
-     */
     @Bean("faqSearchRestClient")
     public RestClient faqSearchRestClient()
     {
@@ -121,6 +118,7 @@ public class KmpConfig {
                 .baseUrl(faqSearchBaseUrl)
                 .build();
     }
+
     /**
      * 注册 MySQL 分页插件；分页插件应保持为内部插件链的最后一项。
      *

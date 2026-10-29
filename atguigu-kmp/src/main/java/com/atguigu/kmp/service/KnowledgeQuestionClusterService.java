@@ -31,10 +31,18 @@ public interface KnowledgeQuestionClusterService extends IService<KnowledgeQuest
 
     void updateQuestionCluster(KnowledgeQuestionCluster cluster, Long userId);
 
-    /** 发布沉淀中或待发布问题簇。 */
+    /**
+     * 发布沉淀中或等待发布的问题簇
+     * @param id
+     * @param userId
+     */
     void publishQuestionCluster(Long id, Long userId);
 
-    /** 取消发布已发布问题簇。 */
+    /**
+     * 取消发布沉淀中或等待发布的问题簇
+     * @param id
+     * @param userId
+     */
     void unpublishQuestionCluster(Long id, Long userId);
 
     /** 查询当前知识单元的热门 FAQ。 */

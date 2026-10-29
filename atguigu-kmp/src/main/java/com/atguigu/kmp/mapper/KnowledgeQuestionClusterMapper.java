@@ -30,6 +30,11 @@ public interface KnowledgeQuestionClusterMapper extends BaseMapper<KnowledgeQues
             Page<KnowledgeQuestionCluster> page,
             @Param("query") KnowledgeQuestionCluster query);
 
-    /** 按知识单元名称查询热门已发布 FAQ。 */
-    List<KnowledgeQuestionCluster> selectRecommendedFaqs(@Param("itemName") String itemName, @Param("limit") int limit);
+    /**
+     * 根据知识单元名称查询推荐问题簇。
+     *
+     * @param itemName 问题簇名称
+     * @return 问题簇
+     */
+    List<KnowledgeQuestionCluster> selectRecommendedFaqs(@Param("itemName") String itemName, @Param("limit") Object limit);
 }

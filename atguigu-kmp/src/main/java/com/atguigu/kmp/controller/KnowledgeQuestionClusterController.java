@@ -174,4 +174,5 @@ public class KnowledgeQuestionClusterController extends BaseController {
         List<KnowledgeFaqModels.KnowledgeFaqItem> faqItems = knowledgeQuestionClusterService.listSuggestedFaqs(keyword);
         return AjaxResult.success(faqItems);
     }
+
 }

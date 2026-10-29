@@ -46,6 +46,7 @@
         ORDER BY qcc.update_time DESC, qcc.id DESC
     </select>
 
+    <!--  计算指定知识单元下的faq的热度分，并按其从高到低排名  -->
     <select id="selectRecommendedFaqs" resultType="com.atguigu.kmp.entity.KnowledgeQuestionCluster">
         SELECT qc.id,
                qc.standard_question,
