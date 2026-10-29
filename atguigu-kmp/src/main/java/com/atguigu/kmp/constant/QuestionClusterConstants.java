@@ -19,4 +19,16 @@ public final class QuestionClusterConstants
 
     /** 标准答案最大长度。 */
     public static final int MAX_ANSWER_LENGTH = 5000;
+
+    /** 推荐 FAQ 数量限制。 */
+    public static final int FAQ_RECOMMENDATION_LIMIT = 5;
+
+    /** 联想 FAQ 最小长度限制。 */
+    public static final int FAQ_SUGGESTION_MIN_LENGTH = 1;
+
+    /** 联想 FAQ 数量限制。 */
+    public static final int FAQ_SUGGESTION_LIMIT = 5;
+
+    /** 联想 FAQ 最小相似度。 */
+    public static final double FAQ_SUGGESTION_MIN_SCORE = 0.1;
 }
