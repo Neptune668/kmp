@@ -114,4 +114,34 @@ public class KnowledgeQuestionClusterController extends BaseController {
         knowledgeQuestionClusterService.updateQuestionCluster(cluster, getUserId());
         return AjaxResult.success();
     }
+
+    /**
+     * POST /kmp/questionCluster/{id}/publish：发布沉淀中或待发布问题簇。
+     *
+     * @param id 问题簇 ID
+     * @return 操作结果
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:questionCluster:publish')")
+    @Log(title = "问题簇发布", businessType = BusinessType.UPDATE)
+    @PostMapping("/{id}/publish")
+    public AjaxResult publish(@PathVariable @Positive(message = "问题簇 ID 不正确") Long id)
+    {
+        knowledgeQuestionClusterService.publishQuestionCluster(id, this.getUserId());
+        return AjaxResult.success();
+    }
+
+    /**
+     * POST /kmp/questionCluster/{id}/unpublish：取消发布问题簇。
+     *
+     * @param id 问题簇 ID
+     * @return 操作结果
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:questionCluster:unpublish')")
+    @Log(title = "问题簇取消发布", businessType = BusinessType.UPDATE)
+    @PostMapping("/{id}/unpublish")
+    public AjaxResult unpublish(@PathVariable @Positive(message = "问题簇 ID 不正确") Long id)
+    {
+        knowledgeQuestionClusterService.unpublishQuestionCluster(id, getUserId());
+        return AjaxResult.success();
+    }
 }

@@ -28,4 +28,10 @@ public interface KnowledgeQuestionClusterService extends IService<KnowledgeQuest
     Map<String, Object> createQuestionCluster(KnowledgeQuestionCluster cluster, Long userId);
 
     void updateQuestionCluster(KnowledgeQuestionCluster cluster, Long userId);
+
+    /** 发布沉淀中或待发布问题簇。 */
+    void publishQuestionCluster(Long id, Long userId);
+
+    /** 取消发布已发布问题簇。 */
+    void unpublishQuestionCluster(Long id, Long userId);
 }

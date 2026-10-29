@@ -1,5 +1,6 @@
 package com.atguigu.kmp.service.impl;
 
+import com.atguigu.kmp.client.FaqSearchClient;
 import com.atguigu.kmp.constant.QuestionClusterConstants;
 import com.atguigu.kmp.entity.KnowledgeGroup;
 import com.atguigu.kmp.entity.KnowledgeQuestionCluster;
@@ -161,5 +162,39 @@ public class KnowledgeQuestionClusterServiceImpl extends ServiceImpl<KnowledgeQu
                 .set(KnowledgeQuestionCluster::getUpdateTime, LocalDateTime.now())
                 .update();
 
+    }
+
+    @Autowired
+    private FaqSearchClient faqSearchClient;
+
+
+    /** {@inheritDoc} */
+    @Override
+    public void publishQuestionCluster(Long id, Long userId)
+    {
+        KnowledgeQuestionCluster cluster = this.getById(id);
+        Integer oldStatus = cluster.getStatus();
+        faqSearchClient.saveFaq(cluster);
+        this.updateStatus(id, oldStatus, QuestionClusterConstants.STATUS_PUBLISHED, userId);
+    }
+
+    /** 发布状态转换。 */
+    private boolean updateStatus(Long id, int oldStatus, int newStatus, Long userId)
+    {
+        return this.lambdaUpdate()
+                .eq(KnowledgeQuestionCluster::getId, id)
+                .eq(KnowledgeQuestionCluster::getStatus, oldStatus)
+                .set(KnowledgeQuestionCluster::getStatus, newStatus)
+                .set(KnowledgeQuestionCluster::getUpdateUserId, userId)
+                .set(KnowledgeQuestionCluster::getUpdateTime, LocalDateTime.now())
+                .update();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void unpublishQuestionCluster(Long id, Long userId)
+    {
+        faqSearchClient.deleteFaq(id);
+        this.updateStatus(id, QuestionClusterConstants.STATUS_PUBLISHED, QuestionClusterConstants.STATUS_PENDING, userId);
     }
 }

@@ -54,7 +54,21 @@ public class KmpConfig {
     @Value("${kmp.qwen.read-timeout}")
     private Duration qwenReadTimeout;
 
+    /** FAQ Elasticsearch 基础地址。 */
+    @Value("${kmp.faq-search.base-url}")
+    private String faqSearchBaseUrl;
 
+    /** FAQ Elasticsearch 索引名称。 */
+    @Value("${kmp.faq-search.index-name}")
+    private String faqSearchIndexName;
+
+    /** FAQ Elasticsearch HTTP 连接超时。 */
+    @Value("${kmp.faq-search.connect-timeout}")
+    private Duration faqSearchConnectTimeout;
+
+    /** FAQ Elasticsearch HTTP 读取超时。 */
+    @Value("${kmp.faq-search.read-timeout}")
+    private Duration faqSearchReadTimeout;
     /**
      * RestClient客户端：调用知识库接口
      *
@@ -88,6 +102,25 @@ public class KmpConfig {
                 .build();
     }
 
+
+    /**
+     * 创建 FAQ Elasticsearch 客户端。
+     *
+     * @return FAQ 搜索 RestClient
+     */
+    @Bean("faqSearchRestClient")
+    public RestClient faqSearchRestClient()
+    {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(faqSearchConnectTimeout);
+        requestFactory.setReadTimeout(faqSearchReadTimeout);
+
+        return RestClient
+                .builder()
+                .requestFactory(requestFactory)
+                .baseUrl(faqSearchBaseUrl)
+                .build();
+    }
     /**
      * 注册 MySQL 分页插件；分页插件应保持为内部插件链的最后一项。
      *
