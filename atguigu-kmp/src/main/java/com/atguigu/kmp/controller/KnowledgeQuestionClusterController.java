@@ -175,4 +175,26 @@ public class KnowledgeQuestionClusterController extends BaseController {
         return AjaxResult.success(faqItems);
     }
 
+
+
+    /**
+     * POST /kmp/questionCluster/faq/{id}/answer：点选 FAQ 后查询答案并记录访问。
+     *
+     * @param id 问题簇 ID
+     * @param request 携带可重放的请求 ID
+     * @return FAQ 答案
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:knowledgeQuery:query')")
+    @PostMapping("/faq/{id}/answer")
+    public AjaxResult getFaqAnswer(
+            @PathVariable @Positive(message = "FAQ ID 不正确") Long id,
+            @Validated @RequestBody KnowledgeFaqModels.KnowledgeFaqAnswerRequest request)
+    {
+        KnowledgeFaqModels.KnowledgeFaqAnswer answer = knowledgeQuestionClusterService.getFaqAnswer(
+                id,
+                this.getUserId(),
+                request.getRequestId()
+        );
+        return AjaxResult.success(answer);
+    }
 }

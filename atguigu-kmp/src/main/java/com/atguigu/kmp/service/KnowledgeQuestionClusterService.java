@@ -48,6 +48,11 @@ public interface KnowledgeQuestionClusterService extends IService<KnowledgeQuest
     /** 查询当前知识单元的热门 FAQ。 */
     List<KnowledgeFaqModels.KnowledgeFaqItem> listRecommendedFaqs(String itemName);
 
-    /** 根据输入内容查询 FAQ 联想。 */
     List<KnowledgeFaqModels.KnowledgeFaqItem> listSuggestedFaqs(String keyword);
+
+    /** 调用外部知识库生成参考答案但不保存。 */
+//    String generateReferenceAnswer(Long id);
+
+    /** 返回 FAQ 答案。 */
+    KnowledgeFaqModels.KnowledgeFaqAnswer getFaqAnswer(Long id, Long userId, String requestId);
 }

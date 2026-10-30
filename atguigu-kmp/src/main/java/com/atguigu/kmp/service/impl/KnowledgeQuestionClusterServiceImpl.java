@@ -2,22 +2,26 @@ package com.atguigu.kmp.service.impl;
 
 import com.atguigu.kmp.client.FaqSearchClient;
 import com.atguigu.kmp.constant.QuestionClusterConstants;
+import com.atguigu.kmp.dto.ExternalQuestionClusterModels.ExternalResponse;
+import com.atguigu.kmp.dto.ExternalQuestionClusterModels.ReferenceAnswerRequest;
+import com.atguigu.kmp.dto.ExternalQuestionClusterModels.ReferenceAnswerResult;
 import com.atguigu.kmp.dto.KnowledgeFaqModels;
 import com.atguigu.kmp.entity.KnowledgeGroup;
 import com.atguigu.kmp.entity.KnowledgeQuestionCluster;
 import com.atguigu.kmp.entity.KnowledgeUnit;
 import com.atguigu.kmp.mapper.KnowledgeQuestionClusterMapper;
-import com.atguigu.kmp.service.KnowledgeGroupService;
-import com.atguigu.kmp.service.KnowledgeQuestionClusterService;
-import com.atguigu.kmp.service.KnowledgeQuestionClusterVectorService;
-import com.atguigu.kmp.service.KnowledgeUnitService;
+import com.atguigu.kmp.service.*;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -30,6 +34,7 @@ import java.util.*;
  * @author atguigu
  * @since 2026-10-20
  */
+@Slf4j
 @Service
 public class KnowledgeQuestionClusterServiceImpl extends ServiceImpl<KnowledgeQuestionClusterMapper, KnowledgeQuestionCluster> implements KnowledgeQuestionClusterService {
 
@@ -151,7 +156,7 @@ public class KnowledgeQuestionClusterServiceImpl extends ServiceImpl<KnowledgeQu
         KnowledgeQuestionCluster current = this.getById(input.getId());
         if (Integer.valueOf(QuestionClusterConstants.STATUS_PUBLISHED).equals(current.getStatus()))
         {
-            // TODO 更新ES
+            faqSearchClient.saveFaq(current);
         }
 
         // 更新数据库
@@ -315,13 +320,69 @@ public class KnowledgeQuestionClusterServiceImpl extends ServiceImpl<KnowledgeQu
     private void updateStatus(Long id, Integer oldStatus, int newStatus, Long userId) {
         this.lambdaUpdate()
                 .eq(KnowledgeQuestionCluster::getId, id)
-//                .eq(KnowledgeQuestionCluster::getStatus, oldStatus)
+                .eq(KnowledgeQuestionCluster::getStatus, oldStatus)
                 .set(KnowledgeQuestionCluster::getStatus, newStatus)
                 .set(KnowledgeQuestionCluster::getUpdateUserId, userId)
                 .set(KnowledgeQuestionCluster::getUpdateTime, LocalDateTime.now())
                 .update();
     }
 
+    @Autowired
+    @Qualifier("knowledgeSystemRestClient")
+    private RestClient restClient;
+    /** {@inheritDoc} */
 
+
+    /** {@inheritDoc} */
+    @Override
+    public KnowledgeFaqModels.KnowledgeFaqAnswer getFaqAnswer(Long id, Long userId, String requestId)
+    {
+        // 在数据落库之后，"发布"状态可能被别的操作破坏，所以读取时再做一次状态复核。
+        KnowledgeQuestionCluster cluster = this.lambdaQuery()
+                .eq(KnowledgeQuestionCluster::getId, id)
+                .eq(KnowledgeQuestionCluster::getStatus, QuestionClusterConstants.STATUS_PUBLISHED)
+                .one();
+
+        // 如果不存在则抛出异常。
+        if (cluster == null)
+        {
+            throw new ServiceException("该 FAQ 已失效，请刷新后重试");
+        }
+
+        // 组织返回结果
+        KnowledgeFaqModels.KnowledgeFaqAnswer answer = new KnowledgeFaqModels.KnowledgeFaqAnswer();
+        answer.setId(cluster.getId());
+        answer.setStandardQuestion(cluster.getStandardQuestion());
+        answer.setStandardAnswer(cluster.getStandardAnswer());
+
+        try
+        {
+            // 点选累加问题簇点击次数
+            boolean counted = increaseFaqClickCount(cluster.getId(), userId, LocalDateTime.now());
+            if (!counted)
+            {
+                log.warn("FAQ 点选未计数（可能刚被取消发布），userId={}，questionClusterId={}", userId, id);
+            }
+        }
+        catch (RuntimeException exception)
+        {
+            // 计数是失败不回滚答案，只告警留痕。
+            //计数丢了如果没有任何痕迹，长期会悄悄低估热门榜。所以不报错的前提是至少留下告警日志，让运维/老师能发现统计在漏数。
+            log.error("FAQ 点选计数失败，userId={}，questionClusterId={}，errorType={}",
+                    userId, id, exception.getClass().getSimpleName());
+        }
+        return answer;
+    }
+
+    private boolean increaseFaqClickCount(Long id, Long userId, LocalDateTime updateTime)
+    {
+        return lambdaUpdate()
+                .eq(KnowledgeQuestionCluster::getId, id)
+                .eq(KnowledgeQuestionCluster::getStatus, QuestionClusterConstants.STATUS_PUBLISHED)
+                .setSql("faq_click_count = COALESCE(faq_click_count, 0) + 1")
+                .set(KnowledgeQuestionCluster::getUpdateUserId, userId)
+                .set(KnowledgeQuestionCluster::getUpdateTime, updateTime)
+                .update();
+    }
 
 }
