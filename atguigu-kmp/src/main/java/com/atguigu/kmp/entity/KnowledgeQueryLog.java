@@ -1,10 +1,12 @@
 package com.atguigu.kmp.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 直接知识查询日志实体，对应 kmp_knowledge_query_log。
@@ -29,7 +31,7 @@ public class KnowledgeQueryLog implements Serializable {
     /**
      * 当次查询使用的改写问题。
      */
-    private String rewirttenQuery; //TODO  数据库表里没有这个字段
+    private String rewirttenQuery;
 
     /**
      * 发起查询的平台用户ID
@@ -57,9 +59,9 @@ public class KnowledgeQueryLog implements Serializable {
     private Long outputTokenCount;
 
     /** 外部知识库匹配到的知识单元名称。 */
-//    @TableField(typeHandler = JacksonTypeHandler.class)
-//    private List<String> itemNames;
-    private String itemNames;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> itemNames;
+//    private String itemNames;
 
     /**
      * 查询终态：1-成功，2-失败
@@ -80,12 +82,12 @@ public class KnowledgeQueryLog implements Serializable {
     /**
      * 问题簇检测状态：0-待检测，1-已完成，2-已跳过。
      */
-    private Integer clusterCheckStatus; //TODO  数据库表里没有这个字段
+    private Integer clusterCheckStatus;
 
     /**
      * 检测后关联或创建的问题簇 ID。
      */
-    private Long questionClusterId; //TODO  数据库表里没有这个字段
+    private Long questionClusterId;
 
     /**
      * 创建时间

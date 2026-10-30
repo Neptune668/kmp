@@ -9,8 +9,9 @@ import com.baomidou.mybatisplus.spring.service.IService;
  * </p>
  *
  * @author atguigu
- * @since 2026-10-21
+ * @since 2026-10-20
  */
 public interface KnowledgeFaqLogService extends IService<KnowledgeFaqLog> {
+
 
 }

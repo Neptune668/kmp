@@ -70,7 +70,41 @@ public class KmpConfig {
     @Value("${kmp.faq-search.read-timeout}")
     private Duration faqSearchReadTimeout;
 
+    /** 直接查询日志 Stream。 */
+    @Value("${kmp.dashboard.query-log-stream-key}")
+    private String dashboardQueryLogStreamKey;
 
+//    /** FAQ 访问日志 Stream。 */
+//    @Value("${kmp.dashboard.faq-log-stream-key}")
+//    private String dashboardFaqLogStreamKey;
+//
+//    /** 两类日志共享的消费组。 */
+//    @Value("${kmp.dashboard.consumer-group}")
+//    private String dashboardConsumerGroup;
+//
+//    /** Stream 单批最大读取数量。 */
+//    @Value("${kmp.dashboard.stream.batch-size}")
+//    private int dashboardStreamBatchSize;
+//
+//    /** Stream 阻塞读取时间。 */
+//    @Value("${kmp.dashboard.stream.block-timeout}")
+//    private Duration dashboardStreamBlockTimeout;
+//
+//    /** Pending 消息允许的最大空闲时间。 */
+//    @Value("${kmp.dashboard.stream.pending-idle}")
+//    private Duration dashboardStreamPendingIdle;
+//
+//    /** 消息进入死信 Stream 前的最大处理次数。 */
+//    @Value("${kmp.dashboard.stream.max-retries}")
+//    private int dashboardStreamMaxRetries;
+
+    /** Stream 近似裁剪长度。 */
+    @Value("${kmp.dashboard.stream.max-length}")
+    private long dashboardStreamMaxLength;
+//
+//    /** 单个请求处理锁超时。 */
+//    @Value("${kmp.dashboard.idempotent-lock-timeout}")
+//    private Duration dashboardIdempotentLockTimeout;
 
     /**
      * RestClient客户端：调用知识库接口
