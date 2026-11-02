@@ -51,7 +51,7 @@ public interface KnowledgeQuestionClusterService extends IService<KnowledgeQuest
     List<KnowledgeFaqModels.KnowledgeFaqItem> listSuggestedFaqs(String keyword);
 
     /** 调用外部知识库生成参考答案但不保存。 */
-//    String generateReferenceAnswer(Long id);
+    String generateReferenceAnswer(Long id);
 
     /** 返回 FAQ 答案。 */
     KnowledgeFaqModels.KnowledgeFaqAnswer getFaqAnswer(Long id, Long userId, String requestId);

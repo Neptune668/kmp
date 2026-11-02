@@ -63,7 +63,9 @@
                                 AND ku.is_deleted = 0
         WHERE qc.is_deleted = 0
           AND qc.status = 2
+        <if test="itemName != null and itemName != ''">
           AND ku.knowledge_unit_name = #{itemName}
+        </if>
         ORDER BY hot_score DESC,
                  qc.association_count DESC,
                  qc.faq_click_count DESC,

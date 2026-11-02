@@ -331,7 +331,30 @@ public class KnowledgeQuestionClusterServiceImpl extends ServiceImpl<KnowledgeQu
     @Qualifier("knowledgeSystemRestClient")
     private RestClient restClient;
     /** {@inheritDoc} */
+    @Override
+    public String generateReferenceAnswer(Long id)
+    {
+        // 获取问题簇
+        KnowledgeQuestionCluster cluster = this.getById(id);
+        // 获取知识单元
+        KnowledgeUnit knowledgeUnit = knowledgeUnitService.getById(cluster.getKnowledgeUnitId());
 
+        // 生成请求id
+        String requestId = UUID.randomUUID().toString();
+        ReferenceAnswerRequest request = new ReferenceAnswerRequest();
+        request.setRequestId(requestId);
+        request.setQuestionClusterId(cluster.getId());
+        request.setStandardQuestion(cluster.getStandardQuestion());
+        request.setDocumentId(knowledgeUnit.getDocumentId());
+
+        ExternalResponse<ReferenceAnswerResult> response = restClient.post()
+                .uri("/internal/question-clusters/reference-answer")
+                .body(request)
+                .retrieve()
+                .body(ExternalResponse.class);
+        ReferenceAnswerResult result = response.getData();
+        return result.getReferenceAnswer();
+    }
 
     /** {@inheritDoc} */
     @Override

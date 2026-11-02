@@ -175,7 +175,21 @@ public class KnowledgeQuestionClusterController extends BaseController {
         return AjaxResult.success(faqItems);
     }
 
+    /**
+     * POST /kmp/questionCluster/{id}/reference-answer：生成但不保存参考答案。
+     *
+     * @param id 问题簇 ID
+     * @return 参考答案
+     */
+    @PreAuthorize("@ss.hasPermi('kmp:questionCluster:generate')")
+    @PostMapping("/{id}/reference-answer")
+    public AjaxResult generateAnswer(@PathVariable @Positive(message = "问题簇 ID 不正确") Long id)
+    {
 
+        String answer = knowledgeQuestionClusterService.generateReferenceAnswer(id);
+        Map<String, Object> result = Map.of("referenceAnswer", answer);
+        return AjaxResult.success("生成参考答案成功", result);
+    }
 
     /**
      * POST /kmp/questionCluster/faq/{id}/answer：点选 FAQ 后查询答案并记录访问。
